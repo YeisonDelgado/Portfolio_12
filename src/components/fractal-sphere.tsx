@@ -176,7 +176,10 @@ export function FractalSphere() {
                 (child.material as THREE.LineBasicMaterial).color = new THREE.Color(0x0099ff);
             }
             if (child.name === 'electron' && child instanceof THREE.Mesh) {
-                (child.material as THREE.MeshBasicMaterial).color = colorFunc(0.5);
+                const electronMaterial = (child.material as THREE.MeshStandardMaterial);
+                const color = colorFunc(0.5);
+                electronMaterial.color.set(color);
+                electronMaterial.emissive.set(color);
             }
              if (child.name === 'nucleus' && child instanceof THREE.Mesh) {
                 (child.material as THREE.MeshBasicMaterial).color = colorFunc(0.5);
@@ -280,7 +283,12 @@ export function FractalSphere() {
       // Add electron for each of the 3 main orbit axes
       const electronCurve = new THREE.EllipseCurve(0, 0, orbitRadius, orbitRadius, 0, 2 * Math.PI, false, 0);
       const electronGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.02, 16, 16);
-      const electronMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false });
+      const electronMat = new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        emissive: 0x00ffff,
+        emissiveIntensity: 2,
+        fog: false,
+      });
       const electron = new THREE.Mesh(electronGeo, electronMat);
       electron.name = "electron";
       electron.userData = {
