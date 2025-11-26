@@ -4,23 +4,9 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+
 import { useToast } from '@/hooks/use-toast';
 import {
   Play,
@@ -41,7 +27,6 @@ type ColorScheme =
   | 'Matrix Green'
   | 'Quantum Purple'
   | 'Sunset';
-type Speed = '0.5' | '1' | '2';
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
@@ -55,12 +40,14 @@ export function FractalSphere() {
   const { toast } = useToast();
 
   const [isPlaying, setIsPlaying] = useState(true);
-  const [speed, setSpeed] = useState<Speed>('1');
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('Original Blue');
-  const [intensity, setIntensity] = useState(75);
-  const [nodeCount, setNodeCount] = useState(400);
-  const [info, setInfo] = useState({ neurons: 0, connections: 0 });
   const [isEnergized, setIsEnergized] = useState(false);
+
+  // Static parameters
+  const speed = '1';
+  const colorScheme: ColorScheme = 'Quantum Purple';
+  const intensity = 33;
+  const nodeCount = 100;
+
 
   // Refs for Three.js objects
   const rendererRef = useRef<THREE.WebGLRenderer>();
@@ -244,7 +231,12 @@ export function FractalSphere() {
 
     const stats = new Stats();
     const statsContainer = document.getElementById('stats-container');
-    if (statsContainer) statsContainer.appendChild(stats.dom);
+    if (statsContainer) {
+      stats.dom.style.position = 'absolute';
+      stats.dom.style.top = '0px';
+      stats.dom.style.left = '0px';
+      statsContainer.appendChild(stats.dom);
+    }
     statsRef.current = stats;
 
     const ambientLight = new THREE.AmbientLight(0x6600ff, 0.5);
@@ -346,8 +338,7 @@ export function FractalSphere() {
     const wireframeSphere = new THREE.Mesh(wireframeGeo, wireframeMat);
     mindStoneGroup.add(wireframeSphere);
 
-    const { geometry, neuronCount, connectionCount } = generateGeometry();
-    setInfo({ neurons: neuronCount, connections: connectionCount });
+    const { geometry } = generateGeometry();
     const material = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, fog: false });
     const lineSphere = new THREE.LineSegments(geometry, material);
     lineSphere.name = "neural-net";
@@ -588,124 +579,22 @@ export function FractalSphere() {
     updateColors(transitionProgressRef.current);
   }, [colorScheme, updateColors]);
 
-  const handleReset = useCallback(() => {
-    if (!controlsRef.current || !mindStoneGroupRef.current) return;
-    controlsRef.current.reset();
-    mindStoneGroupRef.current.rotation.set(0, 0, 0);
-    mindStoneGroupRef.current.scale.set(1, 1, 1);
-    setIsEnergized(false);
-    transitionProgressRef.current = 0;
-  }, []);
-  
-  const handleScreenshot = useCallback(() => {
-    if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
-    const renderer = rendererRef.current;
-    renderer.render(sceneRef.current, cameraRef.current);
-    const dataURL = renderer.domElement.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = 'mind-stone.png';
-    link.click();
-    toast({
-      title: 'Screenshot Saved!',
-      description: 'mind-stone.png has been downloaded.',
-    });
-  }, [toast]);
-  
-  const handleFullscreen = () => {
-    if (mountRef.current) {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        mountRef.current.requestFullscreen();
-      }
-    }
-  };
-
   return (
     <>
       <div ref={mountRef} className="absolute inset-0 z-0 w-full h-full" />
-      <div id="stats-container" className="absolute top-4 left-4 z-20" />
+      <div id="stats-container" className="absolute top-0 left-0 z-20" />
 
-      <Card className="absolute bottom-4 left-4 md:left-auto md:right-4 w-80 max-w-[90vw] bg-card/80 backdrop-blur-sm border-primary/20 shadow-lg z-10">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle>Controls</CardTitle>
-          <CardDescription className="text-xs">
-            {info.neurons} neurons, {info.connections} links
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsPlaying(!isPlaying)}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-            >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleReset} aria-label="Reset View">
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleScreenshot} aria-label="Take Screenshot">
-              <Camera className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleFullscreen} aria-label="Fullscreen">
-              <Maximize className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <Separator />
-
-          <Button variant={isEnergized ? "default" : "outline"} onClick={() => setIsEnergized(!isEnergized)}>
-            <Zap className="h-4 w-4 mr-2" />
-            {isEnergized ? 'Stabilize' : 'Energize'}
-          </Button>
-
-          <Separator />
-          
-          <div className="grid gap-2">
-            <Label htmlFor="intensity-slider" className="flex items-center gap-2"><Zap className="h-4 w-4" /> Intensity: {intensity}%</Label>
-            <Slider id="intensity-slider" value={[intensity]} onValueChange={(v) => setIntensity(v[0])} min={0} max={100} step={1} />
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="nodes-slider" className="flex items-center gap-2"><Network className="h-4 w-4" /> Neurons: {nodeCount}</Label>
-            <Slider id="nodes-slider" value={[nodeCount]} onValueChange={(v) => setNodeCount(v[0])} min={40} max={500} step={10} />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="speed-select">Speed</Label>
-              <Select value={speed} onValueChange={(v: Speed) => setSpeed(v)}>
-                <SelectTrigger id="speed-select">
-                  <SelectValue placeholder="Speed" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0.5">Slow (0.5x)</SelectItem>
-                  <SelectItem value="1">Normal (1x)</SelectItem>
-                  <SelectItem value="2">Fast (2x)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="color-select">Color Scheme</Label>
-              <Select value={colorScheme} onValueChange={(v: ColorScheme) => setColorScheme(v)}>
-                <SelectTrigger id="color-select">
-                  <SelectValue placeholder="Color Scheme" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Original Blue">Original Blue</SelectItem>
-                  <SelectItem value="Plasma">Plasma</SelectItem>
-                  <SelectItem value="Matrix Green">Matrix Green</SelectItem>
-                  <SelectItem value="Quantum Purple">Quantum Purple</SelectItem>
-                  <SelectItem value="Sunset">Sunset</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+        <Button
+          variant={isEnergized ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setIsEnergized(!isEnergized)}
+          className="bg-card/60 backdrop-blur-sm border-primary/20 shadow-lg"
+        >
+          <Zap className="h-4 w-4 mr-2" />
+          {isEnergized ? 'Stabilize' : 'Energize'}
+        </Button>
+      </div>
     </>
   );
 }
