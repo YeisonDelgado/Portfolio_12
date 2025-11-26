@@ -29,8 +29,8 @@ type ColorScheme =
   | 'Sunset';
 
 const SPHERE_RADIUS = 2;
-const K_NEIGHBORS = 4;
-const SPARK_COUNT = 1000;
+const K_NEIGHBORS = 3; // Reduced from 4
+const SPARK_COUNT = 200; // Reduced from 1000
 const COMET_LENGTH = 0.01;
 
 type CometPhase = 'random' | 'wave';
@@ -46,7 +46,7 @@ export function FractalSphere() {
   const speed = '1';
   const colorScheme: ColorScheme = 'Quantum Purple';
   const intensity = 33;
-  const nodeCount = 100;
+  const nodeCount = 50; // Reduced from 100
 
 
   // Refs for Three.js objects
