@@ -45,7 +45,7 @@ type Speed = '0.5' | '1' | '2';
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
-const SPARK_COUNT = 20;
+const SPARK_COUNT = 60;
 const COMET_LENGTH = 0.02;
 
 export function FractalSphere() {
