@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import {
   Play,
@@ -27,60 +28,23 @@ import {
   RotateCcw,
   Camera,
   Palette,
-  ZoomIn,
-  ZoomOut,
   Atom,
+  Zap,
+  Network,
+  Maximize,
 } from 'lucide-react';
 import { Separator } from './ui/separator';
 
-type ColorScheme = 'Rainbow' | 'Plasma' | 'Monochrome' | 'Sunset';
+type ColorScheme =
+  | 'Original Blue'
+  | 'Plasma'
+  | 'Matrix Green'
+  | 'Quantum Purple'
+  | 'Sunset';
 type Speed = '0.5' | '1' | '2';
 
-const NUM_POINTS = 500;
-const K_NEIGHBORS = 4;
 const SPHERE_RADIUS = 2;
-
-const generateGeometry = () => {
-  const points = [];
-  const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle in radians
-
-  for (let i = 0; i < NUM_POINTS; i++) {
-    const y = 1 - (i / (NUM_POINTS - 1)) * 2; // y goes from 1 to -1
-    const radius = Math.sqrt(1 - y * y);
-    const theta = phi * i;
-    const x = Math.cos(theta) * radius;
-    const z = Math.sin(theta) * radius;
-    points.push(new THREE.Vector3(x, y, z).multiplyScalar(SPHERE_RADIUS));
-  }
-
-  const lines = [];
-  for (let i = 0; i < points.length; i++) {
-    const distances = [];
-    for (let j = 0; j < points.length; j++) {
-      if (i === j) continue;
-      distances.push({ index: j, dist: points[i].distanceTo(points[j]) });
-    }
-    distances.sort((a, b) => a.dist - b.dist);
-    for (let k = 0; k < K_NEIGHBORS; k++) {
-      lines.push(points[i], points[distances[k].index]);
-    }
-  }
-
-  const geometry = new THREE.BufferGeometry().setFromPoints(lines);
-  const vertexCount = points.length;
-  const lineCount = lines.length / 2;
-
-  const originPositions = new Float32Array(lines.length * 3);
-  const endPositions = new Float32Array(lines.length * 3);
-  for (let i = 0; i < lines.length; i++) {
-    lines[i].toArray(originPositions, i * 3);
-    new THREE.Vector3(0, 0, 0).toArray(endPositions, i * 3);
-  }
-  geometry.setAttribute('originPosition', new THREE.BufferAttribute(originPositions, 3));
-  geometry.setAttribute('endPosition', new THREE.BufferAttribute(endPositions, 3));
-
-  return { geometry, vertexCount, lineCount };
-};
+const K_NEIGHBORS = 4;
 
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -88,27 +52,81 @@ export function FractalSphere() {
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState<Speed>('1');
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('Rainbow');
-  const [info, setInfo] = useState({ vertices: 0, lines: 0 });
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('Original Blue');
+  const [intensity, setIntensity] = useState(75);
+  const [nodeCount, setNodeCount] = useState(400);
+  const [info, setInfo] = useState({ neurons: 0, connections: 0 });
 
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
   const controlsRef = useRef<OrbitControls>();
   const statsRef = useRef<Stats>();
-  const sphereGroupRef = useRef<THREE.Group>();
+  const mindStoneGroupRef = useRef<THREE.Group>();
   const clockRef = useRef(new THREE.Clock());
 
-  const colorFunctions: Record<ColorScheme, (t: number) => THREE.Color> = useMemo(() => ({
-    Rainbow: (t: number) => new THREE.Color().setHSL(t, 1.0, 0.6),
-    Plasma: (t: number) => new THREE.Color(Math.sin(t * Math.PI), Math.sin(t * Math.PI + (2 * Math.PI / 3)), Math.sin(t * Math.PI + (4 * Math.PI / 3))),
-    Monochrome: (t: number) => new THREE.Color().setHSL(207 / 360, 0.7, t * 0.5 + 0.2),
-    Sunset: (t: number) => new THREE.Color().setHSL(t * 0.1 + 0.55, 0.8, 0.5),
-  }), []);
+  const generateGeometry = useCallback(() => {
+    const points = [];
+    const phi = Math.PI * (3 - Math.sqrt(5));
+
+    for (let i = 0; i < nodeCount; i++) {
+      const y = 1 - (i / (nodeCount - 1)) * 2;
+      const radius = Math.sqrt(1 - y * y);
+      const theta = phi * i;
+      const x = Math.cos(theta) * radius;
+      const z = Math.sin(theta) * radius;
+      points.push(new THREE.Vector3(x, y, z).multiplyScalar(SPHERE_RADIUS));
+    }
+
+    const lines = [];
+    for (let i = 0; i < points.length; i++) {
+      const distances = [];
+      for (let j = 0; j < points.length; j++) {
+        if (i === j) continue;
+        distances.push({ index: j, dist: points[i].distanceTo(points[j]) });
+      }
+      distances.sort((a, b) => a.dist - b.dist);
+      for (let k = 0; k < K_NEIGHBORS; k++) {
+        lines.push(points[i], points[distances[k].index]);
+      }
+    }
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(lines);
+    const neuronCount = points.length;
+    const connectionCount = lines.length / 2;
+
+    const originPositions = new Float32Array(lines.length * 3);
+    const endPositions = new Float32Array(lines.length * 3);
+    for (let i = 0; i < lines.length; i++) {
+      lines[i].toArray(originPositions, i * 3);
+      new THREE.Vector3(0, 0, 0).toArray(endPositions, i * 3);
+    }
+    geometry.setAttribute('originPosition', new THREE.BufferAttribute(originPositions, 3));
+    geometry.setAttribute('endPosition', new THREE.BufferAttribute(endPositions, 3));
+    
+    return { geometry, neuronCount, connectionCount };
+  }, [nodeCount]);
+
+  const colorFunctions: Record<ColorScheme, (t: number) => THREE.Color> =
+    useMemo(
+      () => ({
+        'Original Blue': (t: number) => new THREE.Color().setHSL(0.55 + t * 0.2, 1.0, 0.5),
+        Plasma: (t: number) =>
+          new THREE.Color(
+            Math.sin(t * Math.PI),
+            Math.sin(t * Math.PI + (2 * Math.PI) / 3),
+            Math.sin(t * Math.PI + (4 * Math.PI) / 3)
+          ),
+        'Matrix Green': (t: number) => new THREE.Color().setHSL(0.35, 1.0, t * 0.4 + 0.3),
+        'Quantum Purple': (t: number) => new THREE.Color().setHSL(0.75 + t * 0.1, 0.9, 0.6),
+        Sunset: (t: number) => new THREE.Color().setHSL(t * 0.1 + 0.0, 0.9, 0.6),
+      }),
+      []
+    );
 
   const updateColors = useCallback(() => {
-    if (!sphereGroupRef.current) return;
-    const line = sphereGroupRef.current.children[0] as THREE.LineSegments;
+    if (!mindStoneGroupRef.current) return;
+    const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
     if (!line || !line.geometry) return;
 
     const colors = [];
@@ -117,20 +135,30 @@ export function FractalSphere() {
     const count = positions.length / 3;
 
     for (let i = 0; i < count; i++) {
-      const t = (i / count);
+      const t = i / count;
       const color = colorFunc(t);
       colors.push(color.r, color.g, color.b);
     }
     line.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    if(line.geometry.attributes.color) {
+    if (line.geometry.attributes.color) {
       line.geometry.attributes.color.needsUpdate = true;
     }
   }, [colorScheme, colorFunctions]);
+  
+  const setupScene = useCallback(() => {
+    if(!mountRef.current) return;
+    // Cleanup existing scene
+    if (rendererRef.current) {
+      mountRef.current?.removeChild(rendererRef.current.domElement);
+      rendererRef.current.dispose();
+    }
+    if (statsRef.current) {
+        const statsContainer = document.getElementById('stats-container');
+        if (statsContainer && statsRef.current.dom.parentElement) {
+            statsContainer.removeChild(statsRef.current.dom);
+        }
+    }
 
-  useEffect(() => {
-    if (!mountRef.current) return;
-
-    // --- Scene Setup ---
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -142,12 +170,11 @@ export function FractalSphere() {
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // --- Controls & Stats ---
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.minDistance = 2;
-    controls.maxDistance = 20;
+    controls.minDistance = 2.5;
+    controls.maxDistance = 15;
     controlsRef.current = controls;
 
     const stats = new Stats();
@@ -155,69 +182,39 @@ export function FractalSphere() {
     if (statsContainer) statsContainer.appendChild(stats.dom);
     statsRef.current = stats;
 
-    // --- Lighting ---
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0x6600ff, 0.5);
     scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
+    const pointLight = new THREE.PointLight(0x0099ff, 2, 10);
+    pointLight.position.set(0, 0, 0);
+    scene.add(pointLight);
 
-    // --- Geometry ---
-    const { geometry, vertexCount, lineCount } = generateGeometry();
-    setInfo({ vertices: vertexCount, lines: lineCount });
-    const material = new THREE.LineBasicMaterial({ vertexColors: true });
+    const mindStoneGroup = new THREE.Group();
+    scene.add(mindStoneGroup);
+    mindStoneGroupRef.current = mindStoneGroup;
+
+    const coreSphereGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.1, 32, 32);
+    const coreSphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false });
+    const coreSphere = new THREE.Mesh(coreSphereGeo, coreSphereMat);
+    mindStoneGroup.add(coreSphere);
+
+    const wireframeGeo = new THREE.SphereGeometry(SPHERE_RADIUS, 32, 16);
+    const wireframeMat = new THREE.MeshBasicMaterial({ color: 0x6600ff, wireframe: true, opacity: 0.1, transparent: true });
+    const wireframeSphere = new THREE.Mesh(wireframeGeo, wireframeMat);
+    mindStoneGroup.add(wireframeSphere);
+
+    const { geometry, neuronCount, connectionCount } = generateGeometry();
+    setInfo({ neurons: neuronCount, connections: connectionCount });
+    const material = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, fog: false });
     const lineSphere = new THREE.LineSegments(geometry, material);
-    
-    const sphereGroup = new THREE.Group();
-    sphereGroup.add(lineSphere);
-    scene.add(sphereGroup);
-    sphereGroupRef.current = sphereGroup;
+    lineSphere.name = "neural-net";
+    mindStoneGroup.add(lineSphere);
+
     updateColors();
-    
-    // --- Animation Loop ---
-    const animate = () => {
-      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !sphereGroupRef.current) return;
-      
-      const elapsedTime = clockRef.current.getElapsedTime();
-      
-      if (isPlaying) {
-        const timeFactor = parseFloat(speed);
-        // Rotation
-        sphereGroupRef.current.rotation.x += 0.005 * timeFactor;
-        sphereGroupRef.current.rotation.y += 0.005 * timeFactor;
-        sphereGroupRef.current.rotation.z += 0.005 * timeFactor;
-        
-        // Convergence/Expansion (3s cycle)
-        const convergenceProgress = (Math.sin(elapsedTime * timeFactor * (Math.PI * 2 / 3)) + 1) / 2;
-        const easedProgress = 0.5 - 0.5 * Math.cos(convergenceProgress * Math.PI);
-        
-        // Pulse effect
-        const pulse = 1 + (Math.sin(convergenceProgress * Math.PI * 2) * 0.05);
-        sphereGroupRef.current.scale.set(pulse, pulse, pulse);
 
-        // Animate vertices
-        const line = sphereGroupRef.current.children[0] as THREE.LineSegments;
-        const currentPos = line.geometry.attributes.position as THREE.BufferAttribute;
-        const originPos = line.geometry.attributes.originPosition as THREE.BufferAttribute;
-        const endPos = line.geometry.attributes.endPosition as THREE.BufferAttribute;
-        
-        for (let i = 0; i < currentPos.count; i++) {
-          const x = THREE.MathUtils.lerp(endPos.getX(i), originPos.getX(i), easedProgress);
-          const y = THREE.MathUtils.lerp(endPos.getY(i), originPos.getY(i), easedProgress);
-          const z = THREE.MathUtils.lerp(endPos.getZ(i), originPos.getZ(i), easedProgress);
-          currentPos.setXYZ(i, x, y, z);
-        }
-        currentPos.needsUpdate = true;
-      }
-      
-      controlsRef.current?.update();
-      statsRef.current?.update();
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
-      requestAnimationFrame(animate);
-    };
+  }, [generateGeometry, updateColors]);
 
-    animate();
-
+  useEffect(() => {
+    setupScene();
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
@@ -225,21 +222,75 @@ export function FractalSphere() {
       rendererRef.current.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
+    
+    let animationFrameId: number;
 
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !mindStoneGroupRef.current) return;
+
+      const elapsedTime = clockRef.current.getElapsedTime();
+      const timeFactor = parseFloat(speed);
+
+      if (isPlaying) {
+        mindStoneGroupRef.current.rotation.y += 0.002 * timeFactor;
+
+        // Pulsation
+        const pulseCycle = (elapsedTime * (2 * Math.PI)) / 1.5;
+        const scale = 1 + Math.sin(pulseCycle) * 0.05;
+        mindStoneGroupRef.current.scale.set(scale, scale, scale);
+
+        // Neural network animation
+        const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
+        if(line && line.geometry) {
+            const currentPos = line.geometry.attributes.position as THREE.BufferAttribute;
+            const originPos = line.geometry.attributes.originPosition as THREE.BufferAttribute;
+            
+            const firingRate = intensity / 100;
+            const progress = (Math.sin(elapsedTime * timeFactor * firingRate * 2) + 1) / 2;
+            const easedProgress = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+
+            for (let i = 0; i < currentPos.count; i++) {
+                const x = THREE.MathUtils.lerp(0, originPos.getX(i), easedProgress);
+                const y = THREE.MathUtils.lerp(0, originPos.getY(i), easedProgress);
+                const z = THREE.MathUtils.lerp(0, originPos.getZ(i), easedProgress);
+                currentPos.setXYZ(i, x, y, z);
+            }
+            currentPos.needsUpdate = true;
+            
+            // Glow intensity
+            (line.material as THREE.LineBasicMaterial).opacity = easedProgress * 0.5 + 0.2;
+            const coreSphere = mindStoneGroupRef.current.children[0] as THREE.Mesh;
+            (coreSphere.material as THREE.MeshBasicMaterial).color.setHSL(0.5, 1.0, easedProgress * 0.2 + 0.4);
+
+        }
+      }
+
+      controlsRef.current?.update();
+      statsRef.current?.update();
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+    };
+
+    animate();
+    
     return () => {
       window.removeEventListener('resize', handleResize);
-      mountRef.current?.removeChild(renderer.domElement);
-      renderer.dispose();
-      statsContainer?.removeChild(stats.dom);
+      cancelAnimationFrame(animationFrameId);
     };
-  }, [updateColors, isPlaying, speed]);
-
-
+  }, [speed, isPlaying, intensity, nodeCount, setupScene]);
+  
   useEffect(() => {
     updateColors();
   }, [colorScheme, updateColors]);
 
-
+  const handleReset = useCallback(() => {
+    if (!controlsRef.current || !mindStoneGroupRef.current) return;
+    controlsRef.current.reset();
+    mindStoneGroupRef.current.rotation.set(0, 0, 0);
+    mindStoneGroupRef.current.scale.set(1, 1, 1);
+    clockRef.current.start();
+  }, []);
+  
   const handleScreenshot = useCallback(() => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
     const renderer = rendererRef.current;
@@ -247,21 +298,23 @@ export function FractalSphere() {
     const dataURL = renderer.domElement.toDataURL('image/png');
     const link = document.createElement('a');
     link.href = dataURL;
-    link.download = 'fractal-sphere.png';
+    link.download = 'mind-stone.png';
     link.click();
     toast({
       title: 'Screenshot Saved!',
-      description: 'fractal-sphere.png has been downloaded.',
+      description: 'mind-stone.png has been downloaded.',
     });
   }, [toast]);
   
-  const handleReset = useCallback(() => {
-    if (!controlsRef.current || !sphereGroupRef.current) return;
-    controlsRef.current.reset();
-    sphereGroupRef.current.rotation.set(0, 0, 0);
-    sphereGroupRef.current.scale.set(1, 1, 1);
-    clockRef.current.start();
-  }, []);
+  const handleFullscreen = () => {
+    if (mountRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        mountRef.current.requestFullscreen();
+      }
+    }
+  };
 
   return (
     <>
@@ -271,9 +324,11 @@ export function FractalSphere() {
       <Card className="absolute bottom-4 left-4 md:left-auto md:right-4 w-80 max-w-[90vw] bg-card/80 backdrop-blur-sm border-primary/20 shadow-lg z-10">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Controls</CardTitle>
-          <CardDescription className="text-xs">{info.vertices} vertices, {info.lines} lines</CardDescription>
+          <CardDescription className="text-xs">
+            {info.neurons} neurons, {info.connections} links
+          </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid gap-3">
           <div className="flex items-center justify-center gap-2">
             <Button
               variant="outline"
@@ -289,36 +344,52 @@ export function FractalSphere() {
             <Button variant="outline" size="icon" onClick={handleScreenshot} aria-label="Take Screenshot">
               <Camera className="h-4 w-4" />
             </Button>
+            <Button variant="outline" size="icon" onClick={handleFullscreen} aria-label="Fullscreen">
+              <Maximize className="h-4 w-4" />
+            </Button>
           </div>
 
           <Separator />
           
           <div className="grid gap-2">
-            <Label htmlFor="speed-select">Speed</Label>
-            <Select value={speed} onValueChange={(v: Speed) => setSpeed(v)}>
-              <SelectTrigger id="speed-select">
-                <SelectValue placeholder="Speed" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0.5">Slow (0.5x)</SelectItem>
-                <SelectItem value="1">Normal (1x)</SelectItem>
-                <SelectItem value="2">Fast (2x)</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="intensity-slider" className="flex items-center gap-2"><Zap className="h-4 w-4" /> Intensity: {intensity}%</Label>
+            <Slider id="intensity-slider" value={[intensity]} onValueChange={(v) => setIntensity(v[0])} min={0} max={100} step={1} />
           </div>
+          
           <div className="grid gap-2">
-            <Label htmlFor="color-select">Color Scheme</Label>
-            <Select value={colorScheme} onValueChange={(v: ColorScheme) => setColorScheme(v)}>
-              <SelectTrigger id="color-select">
-                <SelectValue placeholder="Color Scheme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Rainbow">Rainbow</SelectItem>
-                <SelectItem value="Plasma">Plasma</SelectItem>
-                <SelectItem value="Monochrome">Monochrome</SelectItem>
-                <SelectItem value="Sunset">Sunset</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="nodes-slider" className="flex items-center gap-2"><Network className="h-4 w-4" /> Neurons: {nodeCount}</Label>
+            <Slider id="nodes-slider" value={[nodeCount]} onValueChange={(v) => setNodeCount(v[0])} min={100} max={500} step={10} />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="speed-select">Speed</Label>
+              <Select value={speed} onValueChange={(v: Speed) => setSpeed(v)}>
+                <SelectTrigger id="speed-select">
+                  <SelectValue placeholder="Speed" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0.5">Slow (0.5x)</SelectItem>
+                  <SelectItem value="1">Normal (1x)</SelectItem>
+                  <SelectItem value="2">Fast (2x)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="color-select">Color Scheme</Label>
+              <Select value={colorScheme} onValueChange={(v: ColorScheme) => setColorScheme(v)}>
+                <SelectTrigger id="color-select">
+                  <SelectValue placeholder="Color Scheme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Original Blue">Original Blue</SelectItem>
+                  <SelectItem value="Plasma">Plasma</SelectItem>
+                  <SelectItem value="Matrix Green">Matrix Green</SelectItem>
+                  <SelectItem value="Quantum Purple">Quantum Purple</SelectItem>
+                  <SelectItem value="Sunset">Sunset</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>

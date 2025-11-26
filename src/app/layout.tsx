@@ -3,9 +3,9 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'FractalSphere - 3D Animated Fractal Visualizer',
+  title: 'Ultron Mind Stone Visualizer - Neural Consciousness Explorer',
   description:
-    'Visualizador interactivo de esferas fractales 3D con animación fluida y controles intuitivos',
+    'Witness the digital consciousness of an AI mind through dynamic neural pathways',
 };
 
 export default function RootLayout({

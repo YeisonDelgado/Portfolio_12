@@ -6,11 +6,11 @@ export function Header() {
       <div className="container mx-auto flex items-center gap-4">
         <Atom className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-2xl font-bold font-headline tracking-tight text-white">
-            FractalSphere 3D
+          <h1 className="text-xl font-bold font-headline tracking-tight text-white">
+            ULTRON MIND STONE
           </h1>
           <p className="text-sm text-muted-foreground">
-            3D Animated Fractal Visualizer
+            Neural Consciousness Simulator
           </p>
         </div>
       </div>
