@@ -70,6 +70,7 @@ export function FractalSphere() {
   const mindStoneGroupRef = useRef<THREE.Group>();
   const cometsRef = useRef<THREE.Group>();
   const neuronBranchesRef = useRef<THREE.Group>();
+  const atomGroupRef = useRef<THREE.Group>();
   const clockRef = useRef(new THREE.Clock());
 
   // Refs for animation logic state
@@ -139,23 +140,25 @@ export function FractalSphere() {
 
   const updateColors = useCallback(() => {
     if (!mindStoneGroupRef.current) return;
-    const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
-    if (!line || !line.geometry) return;
-
-    const colors = [];
     const colorFunc = colorFunctions[colorScheme];
-    const positions = line.geometry.attributes.position.array;
-    const count = positions.length / 3;
 
-    for (let i = 0; i < count; i++) {
-      const t = i / count;
-      const color = colorFunc(t);
-      colors.push(color.r, color.g, color.b);
+    const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
+    if (line && line.geometry) {
+        const colors = [];
+        const positions = line.geometry.attributes.position.array;
+        const count = positions.length / 3;
+
+        for (let i = 0; i < count; i++) {
+          const t = i / count;
+          const color = colorFunc(t);
+          colors.push(color.r, color.g, color.b);
+        }
+        line.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        if (line.geometry.attributes.color) {
+          line.geometry.attributes.color.needsUpdate = true;
+        }
     }
-    line.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    if (line.geometry.attributes.color) {
-      line.geometry.attributes.color.needsUpdate = true;
-    }
+
 
     if (cometsRef.current) {
         cometsRef.current.children.forEach(child => {
@@ -180,6 +183,20 @@ export function FractalSphere() {
             if (child.name === 'neuron-branch-tube') {
                 const tube = child as THREE.Mesh;
                 (tube.material as THREE.MeshBasicMaterial).color = colorFunc(0.7);
+            }
+        });
+    }
+
+    if (atomGroupRef.current) {
+        atomGroupRef.current.children.forEach(child => {
+            if (child.name === 'orbit' && child instanceof THREE.Line) {
+                (child.material as THREE.LineBasicMaterial).color = colorFunc(0.5).multiplyScalar(0.5);
+            }
+            if (child.name === 'electron' && child instanceof THREE.Mesh) {
+                (child.material as THREE.MeshBasicMaterial).color = colorFunc(0.5);
+            }
+             if (child.name === 'nucleus' && child instanceof THREE.Mesh) {
+                (child.material as THREE.MeshBasicMaterial).color = colorFunc(0.5);
             }
         });
     }
@@ -232,11 +249,56 @@ export function FractalSphere() {
     const mindStoneGroup = new THREE.Group();
     scene.add(mindStoneGroup);
     mindStoneGroupRef.current = mindStoneGroup;
+    
+    // Atom Core
+    const atomGroup = new THREE.Group();
+    atomGroupRef.current = atomGroup;
+    mindStoneGroup.add(atomGroup);
+    
+    const nucleusGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.1, 32, 32);
+    const nucleusMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false });
+    const nucleus = new THREE.Mesh(nucleusGeo, nucleusMat);
+    nucleus.name = "nucleus";
+    atomGroup.add(nucleus);
+    
+    const orbitRadius = SPHERE_RADIUS * 0.25;
+    const orbitMaterial = new THREE.LineBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.3,
+      fog: false,
+    });
 
-    const coreSphereGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.1, 32, 32);
-    const coreSphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false });
-    const coreSphere = new THREE.Mesh(coreSphereGeo, coreSphereMat);
-    mindStoneGroup.add(coreSphere);
+    for (let i = 0; i < 3; i++) {
+        const curve = new THREE.EllipseCurve(
+            0, 0,
+            orbitRadius, orbitRadius,
+            0, 2 * Math.PI,
+            false,
+            0
+        );
+        const points = curve.getPoints(100);
+        const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const orbit = new THREE.Line(orbitGeo, orbitMaterial);
+        orbit.name = "orbit";
+        orbit.rotation.x = Math.random() * Math.PI;
+        orbit.rotation.y = Math.random() * Math.PI;
+        orbit.rotation.z = Math.random() * Math.PI;
+        atomGroup.add(orbit);
+
+        const electronGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.02, 16, 16);
+        const electronMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false });
+        const electron = new THREE.Mesh(electronGeo, electronMat);
+        electron.name = "electron";
+        electron.userData = {
+            curve: curve,
+            orbit: orbit,
+            progress: Math.random(),
+            speed: (Math.random() * 0.2 + 0.3)
+        };
+        atomGroup.add(electron);
+    }
+    
 
     const wireframeGeo = new THREE.SphereGeometry(SPHERE_RADIUS, 32, 16);
     const wireframeMat = new THREE.MeshBasicMaterial({ color: 0x6600ff, wireframe: true, opacity: 0.1, transparent: true });
@@ -346,8 +408,6 @@ export function FractalSphere() {
     
     let animationFrameId: number;
     let completedComets = 0;
-    const up = new THREE.Vector3(0, 1, 0);
-    const axis = new THREE.Vector3();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
@@ -385,9 +445,31 @@ export function FractalSphere() {
             
             // Glow intensity
             (line.material as THREE.LineBasicMaterial).opacity = easedProgress * 0.5 + 0.2;
-            const coreSphere = mindStoneGroupRef.current.children[0] as THREE.Mesh;
-            (coreSphere.material as THREE.MeshBasicMaterial).color.setHSL(0.5, 1.0, easedProgress * 0.2 + 0.4);
         }
+
+        // Atom animation
+        if (atomGroupRef.current) {
+            const nucleus = atomGroupRef.current.getObjectByName('nucleus') as THREE.Mesh;
+            if (nucleus) {
+                const coreGlow = (Math.sin(elapsedTime * 2) + 1) / 2 * 0.3 + 0.7; // 0.7 to 1.0
+                (nucleus.material as THREE.MeshBasicMaterial).color.setHSL(0.5, 1.0, coreGlow * 0.5);
+            }
+
+            atomGroupRef.current.children.forEach(child => {
+                if (child.name === 'electron') {
+                    const electron = child as THREE.Mesh;
+                    const { userData } = electron;
+                    
+                    userData.progress += delta * userData.speed * timeFactor;
+                    if(userData.progress > 1) userData.progress -= 1;
+                    
+                    const point = userData.curve.getPointAt(userData.progress);
+                    electron.position.copy(point);
+                    electron.position.applyQuaternion(userData.orbit.quaternion);
+                }
+            });
+        }
+
 
         // Comets animation
         if (cometsRef.current) {
@@ -577,7 +659,7 @@ export function FractalSphere() {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="speed-select">Speed</Label>
-              <Select value={speed} onValueChange={(v: Speed) => setSpeed(v)}>
+              <Select value={speed} onValue-change={(v: Speed) => setSpeed(v)}>
                 <SelectTrigger id="speed-select">
                   <SelectValue placeholder="Speed" />
                 </SelectTrigger>
