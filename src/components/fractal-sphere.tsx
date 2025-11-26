@@ -309,8 +309,16 @@ export function FractalSphere() {
         tubeMesh.name = "neuron-branch-tube";
         branchesGroup.add(tubeMesh);
 
-        const pulseGeo = new THREE.TorusGeometry(0.08, 0.02, 8, 24);
-        const pulseMat = new THREE.MeshBasicMaterial({ color: 0xccffff, transparent: false });
+        // A short, wide cylinder to act as the glowing band
+        const pulseGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.1, 16, 1, true);
+        pulseGeo.rotateX(Math.PI / 2); // Orient it to slide along the tube
+        const pulseMat = new THREE.MeshBasicMaterial({ 
+            color: 0xccffff, 
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide
+        });
         const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
         pulseMesh.name = "neuron-branch-pulse";
         pulseMesh.userData = {
@@ -337,7 +345,6 @@ export function FractalSphere() {
     
     let animationFrameId: number;
     let completedComets = 0;
-    const tangent = new THREE.Vector3();
     const up = new THREE.Vector3(0, 1, 0);
     const axis = new THREE.Vector3();
 
@@ -461,7 +468,7 @@ export function FractalSphere() {
                 if (child.name === 'neuron-branch-pulse') {
                     const pulse = child as THREE.Mesh;
                     const { userData } = pulse;
-                    userData.progress += delta * 0.2 * timeFactor; // Faster speed
+                    userData.progress += delta * 0.2 * timeFactor;
                     if (userData.progress > 1) userData.progress = 0;
                     
                     const point = userData.curve.getPointAt(userData.progress);
