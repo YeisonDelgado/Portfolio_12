@@ -45,8 +45,8 @@ type Speed = '0.5' | '1' | '2';
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
-const SPARK_COUNT = 10;
-const COMET_LENGTH = 0.05;
+const SPARK_COUNT = 20;
+const COMET_LENGTH = 0.02;
 
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -238,7 +238,7 @@ export function FractalSphere() {
 
         const cometMat = new THREE.LineBasicMaterial({ 
             vertexColors: true, 
-            linewidth: 3,
+            linewidth: 4,
             transparent: true,
             blending: THREE.AdditiveBlending,
             depthWrite: false,
@@ -248,7 +248,7 @@ export function FractalSphere() {
         comet.userData = {
             direction: new THREE.Vector3().randomDirection(),
             progress: Math.random(), // Random initial progress
-            speed: (Math.random() * 0.15 + 0.1),
+            speed: (Math.random() * 0.2 + 0.15),
             delay: Math.random() * 5, // Wait time before firing
             travelOutward: i < SPARK_COUNT / 2 // Half travel outward, half inward
         };
