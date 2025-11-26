@@ -261,7 +261,7 @@ export function FractalSphere() {
 
         const cometMat = new THREE.LineBasicMaterial({ 
             vertexColors: true, 
-            linewidth: 2, // Increased width
+            linewidth: 2,
             transparent: true,
             blending: THREE.AdditiveBlending,
             depthWrite: false,
@@ -271,7 +271,7 @@ export function FractalSphere() {
         comet.userData = {
             direction: new THREE.Vector3().randomDirection(),
             progress: Math.random(),
-            speed: (Math.random() * 0.2 + 0.25), // A bit faster
+            speed: (Math.random() * 0.2 + 0.25),
             delay: Math.random() * 5,
             travelOutward: i < SPARK_COUNT / 2 
         };
@@ -286,18 +286,23 @@ export function FractalSphere() {
     for (let i = 0; i < 2; i++) {
         const points = [new THREE.Vector3(0, 0, 0)];
         let lastPoint = new THREE.Vector3(0, 0, 0);
-        for(let j=1; j<8; j++) {
-            const newPoint = new THREE.Vector3(
-                lastPoint.x + (Math.random() - 0.5) * 1.5,
-                lastPoint.y + (Math.random() - 0.5) * 1.5,
-                lastPoint.z + (Math.random() - 0.5) * 1.5,
-            ).clampLength(0, SPHERE_RADIUS * (j/7)); // Adjust to stay within sphere
+        const branchDirection = new THREE.Vector3().randomDirection();
+        for(let j=1; j<15; j++) {
+            const randomOffset = new THREE.Vector3(
+                (Math.random() - 0.5),
+                (Math.random() - 0.5),
+                (Math.random() - 0.5)
+            ).multiplyScalar(0.25);
+            
+            const newPoint = branchDirection.clone().multiplyScalar(j * 0.15).add(randomOffset);
+            newPoint.clampLength(0, SPHERE_RADIUS * 1.1); // Allow to slightly exceed for a better look
+            
             points.push(newPoint);
             lastPoint = newPoint;
         }
 
         const curve = new THREE.CatmullRomCurve3(points);
-        const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.05, 8, false);
+        const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.02, 8, false); // Tapering would be custom
         const tubeMat = new THREE.MeshBasicMaterial({ 
             color: 0x0099FF, 
             transparent: true, 
@@ -310,12 +315,12 @@ export function FractalSphere() {
         branchesGroup.add(tubeMesh);
 
         // A short, wide cylinder to act as the glowing band
-        const pulseGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.1, 16, 1, true);
+        const pulseGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 16, 1, true);
         pulseGeo.rotateX(Math.PI / 2); // Orient it to slide along the tube
         const pulseMat = new THREE.MeshBasicMaterial({ 
             color: 0xccffff, 
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.7,
             blending: THREE.AdditiveBlending,
             side: THREE.DoubleSide
         });
@@ -582,7 +587,7 @@ export function FractalSphere() {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="speed-select">Speed</Label>
-              <Select value={speed} onValueeChange={(v: Speed) => setSpeed(v)}>
+              <Select value={speed} onValueChange={(v: Speed) => setSpeed(v)}>
                 <SelectTrigger id="speed-select">
                   <SelectValue placeholder="Speed" />
                 </SelectTrigger>
