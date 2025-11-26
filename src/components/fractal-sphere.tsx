@@ -286,12 +286,12 @@ export function FractalSphere() {
     for (let i = 0; i < 2; i++) {
         const points = [new THREE.Vector3(0, 0, 0)];
         let lastPoint = new THREE.Vector3(0, 0, 0);
-        for(let j=1; j<5; j++) {
+        for(let j=1; j<8; j++) {
             const newPoint = new THREE.Vector3(
                 lastPoint.x + (Math.random() - 0.5) * 1.5,
                 lastPoint.y + (Math.random() - 0.5) * 1.5,
                 lastPoint.z + (Math.random() - 0.5) * 1.5,
-            ).clampLength(j * 0.6, j * 0.6 + 0.2);
+            ).clampLength(0, SPHERE_RADIUS * (j/8));
             points.push(newPoint);
             lastPoint = newPoint;
         }
