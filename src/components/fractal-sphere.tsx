@@ -321,7 +321,7 @@ export function FractalSphere() {
           curve: electronCurve,
           orbitRotation: orbitRotation,
           progress: Math.random(),
-          speed: (Math.random() * 0.2 + 0.3)
+          speed: (Math.random() * 0.1 + 0.15)
       };
       atomGroup.add(electronGroup);
     }
