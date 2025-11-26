@@ -353,7 +353,7 @@ export function FractalSphere() {
       if (isPlaying) {
         mindStoneGroupRef.current.rotation.y += 0.002 * timeFactor;
 
-        // Neural network animation - localized pulse at the top
+        // Neural network animation - global pulse
         const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
         if (line && line.geometry) {
             const currentPos = line.geometry.attributes.position as THREE.BufferAttribute;
@@ -369,10 +369,7 @@ export function FractalSphere() {
                 const oy = originPos.getY(i);
                 const oz = originPos.getZ(i);
 
-                // Calculate which vertices are at the top (y > 0)
-                const yNormalized = Math.max(0, oy / SPHERE_RADIUS);
-                // The pulse effect is strongest at the very top (y=1) and fades out towards the equator (y=0)
-                const pulseStrength = easedPulse * yNormalized * 0.4;
+                const pulseStrength = easedPulse * 0.2; // Apply pulse uniformly
                 
                 const vertexVector = new THREE.Vector3(ox, oy, oz);
                 // Apply pulse only if the vertex is on the sphere surface (not at the center)
