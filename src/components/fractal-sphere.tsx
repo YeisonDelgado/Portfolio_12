@@ -46,7 +46,7 @@ type Speed = '0.5' | '1' | '2';
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
 const SPARK_COUNT = 10;
-const COMET_LENGTH = 0.5;
+const COMET_LENGTH = 0.05;
 
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -238,7 +238,7 @@ export function FractalSphere() {
 
         const cometMat = new THREE.LineBasicMaterial({ 
             vertexColors: true, 
-            linewidth: 2,
+            linewidth: 3,
             transparent: true,
             blending: THREE.AdditiveBlending,
             depthWrite: false,
@@ -248,7 +248,7 @@ export function FractalSphere() {
         comet.userData = {
             direction: new THREE.Vector3().randomDirection(),
             progress: Math.random(), // Random initial progress
-            speed: (Math.random() * 0.1 + 0.05), // Slower speed
+            speed: (Math.random() * 0.15 + 0.1),
             delay: Math.random() * 5, // Wait time before firing
             travelOutward: i < SPARK_COUNT / 2 // Half travel outward, half inward
         };
@@ -327,7 +327,9 @@ export function FractalSphere() {
                 (comet.material as THREE.Material).opacity = 1;
                 userData.progress += userData.speed * delta * timeFactor;
                 
-                const headProgress = userData.travelOutward ? userData.progress : 1 - userData.progress;
+                let headProgress = userData.travelOutward ? userData.progress : 1 - userData.progress;
+                headProgress = Math.max(0, Math.min(1, headProgress)); // Clamp between 0 and 1
+
                 const tailProgress = userData.travelOutward 
                     ? Math.max(0, headProgress - COMET_LENGTH) 
                     : Math.min(1, headProgress + COMET_LENGTH);
@@ -340,7 +342,7 @@ export function FractalSphere() {
                 head.toArray(positions, 3);
                 (comet.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
 
-                if (userData.progress >= 1.0 + COMET_LENGTH) {
+                if (userData.progress >= 1.0) {
                     // Reset comet
                     userData.progress = 0;
                     userData.direction.randomDirection();
