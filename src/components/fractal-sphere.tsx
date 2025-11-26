@@ -176,7 +176,7 @@ export function FractalSphere() {
     if (atomGroupRef.current) {
         atomGroupRef.current.children.forEach(child => {
             if (child.name === 'orbit' && child instanceof THREE.Line) {
-                (child.material as THREE.LineBasicMaterial).color = colorFunc(0.5).multiplyScalar(0.5);
+                (child.material as THREE.LineBasicMaterial).color = new THREE.Color(0x0099ff);
             }
             if (child.name === 'electron' && child instanceof THREE.Mesh) {
                 (child.material as THREE.MeshBasicMaterial).color = colorFunc(0.5);
@@ -249,11 +249,11 @@ export function FractalSphere() {
     
     const orbitRadius = SPHERE_RADIUS * 0.25;
     const orbitMaterial = new THREE.LineBasicMaterial({
-      color: 0x00ffff,
+      color: 0x0099ff,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.5,
       fog: false,
-      linewidth: 3,
+      linewidth: 5,
     });
 
     for (let i = 0; i < 3; i++) {
@@ -388,8 +388,8 @@ export function FractalSphere() {
             const nucleus = atomGroupRef.current.getObjectByName('nucleus') as THREE.Mesh;
             if (nucleus) {
                 const coreGlow = (Math.sin(elapsedTime * 2) + 1) / 2 * 0.3 + 0.7; // 0.7 to 1.0
-                (nucleus.material as THREE.MeshBasicMaterial).color.setHSL(0.5, 1.0, coreGlow * 0.5);
-                (nucleus.material as THREE.MeshBasicMaterial).opacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.8;
+                (nucleus.material as THREE.MeshBasicMaterial).color.setHSL(0.55, 1.0, coreGlow * 0.6);
+                (nucleus.material as THREE.MeshBasicMaterial).opacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.6;
             }
 
             atomGroupRef.current.children.forEach(child => {
