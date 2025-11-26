@@ -248,15 +248,19 @@ export function FractalSphere() {
     const orbitMaterial = new THREE.LineBasicMaterial({
       color: 0x0099ff,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.2, // Lower opacity for each line
       fog: false,
-      linewidth: 10,
     });
 
+    const lineCount = 5; // Number of lines to superimpose
+    const radiusStep = 0.005; // Distance between each line
+
     for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < lineCount; j++) {
+        const currentRadius = orbitRadius + (j - Math.floor(lineCount / 2)) * radiusStep;
         const curve = new THREE.EllipseCurve(
             0, 0,
-            orbitRadius, orbitRadius,
+            currentRadius, currentRadius,
             0, 2 * Math.PI,
             false,
             0
@@ -267,20 +271,24 @@ export function FractalSphere() {
         orbit.name = "orbit";
         orbit.rotation.x = Math.PI / 2;
         orbit.rotation.y = (Math.PI / 3) * i;
-        orbit.rotation.z = 0;
+        orbit.rotation.z = Math.random() * Math.PI; // Corrected intersection
         atomGroup.add(orbit);
+      }
 
-        const electronGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.02, 16, 16);
-        const electronMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false });
-        const electron = new THREE.Mesh(electronGeo, electronMat);
-        electron.name = "electron";
-        electron.userData = {
-            curve: curve,
-            orbit: orbit,
-            progress: Math.random(),
-            speed: (Math.random() * 0.2 + 0.3)
-        };
-        atomGroup.add(electron);
+      // Add electron for each of the 3 main orbit axes
+      const electronCurve = new THREE.EllipseCurve(0, 0, orbitRadius, orbitRadius, 0, 2 * Math.PI, false, 0);
+      const electronGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.02, 16, 16);
+      const electronMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false });
+      const electron = new THREE.Mesh(electronGeo, electronMat);
+      electron.name = "electron";
+      electron.userData = {
+          curve: electronCurve,
+          // We need a reference rotation object, let's create a dummy one
+          orbit: { rotation: new THREE.Euler(Math.PI / 2, (Math.PI / 3) * i, Math.random() * Math.PI) },
+          progress: Math.random(),
+          speed: (Math.random() * 0.2 + 0.3)
+      };
+      atomGroup.add(electron);
     }
     
 
@@ -402,7 +410,10 @@ export function FractalSphere() {
                     
                     const point = userData.curve.getPointAt(userData.progress);
                     electron.position.copy(point);
-                    electron.position.applyQuaternion(userData.orbit.quaternion);
+                    
+                    // Apply the same rotation as the reference orbit
+                    const q = new THREE.Quaternion().setFromEuler(userData.orbit.rotation);
+                    electron.position.applyQuaternion(q);
                 }
             });
         }
