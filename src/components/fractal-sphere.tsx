@@ -42,7 +42,6 @@ type ColorScheme =
   | 'Quantum Purple'
   | 'Sunset';
 type Speed = '0.5' | '1' | '2';
-type AnimationState = 'stable' | 'energizing' | 'energized' | 'stabilizing';
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
@@ -61,6 +60,7 @@ export function FractalSphere() {
   const [intensity, setIntensity] = useState(75);
   const [nodeCount, setNodeCount] = useState(400);
   const [info, setInfo] = useState({ neurons: 0, connections: 0 });
+  const [isEnergized, setIsEnergized] = useState(false);
 
   // Refs for Three.js objects
   const rendererRef = useRef<THREE.WebGLRenderer>();
@@ -78,9 +78,7 @@ export function FractalSphere() {
   const phaseRef = useRef<CometPhase>('random');
   const waveAxisRef = useRef(new THREE.Vector3().randomDirection());
 
-  // State for automatic energizing cycle
-  const animationStateRef = useRef<AnimationState>('stable');
-  const lastStateChangeTimeRef = useRef(0);
+  // State for energizing cycle
   const transitionProgressRef = useRef(0);
 
 
@@ -141,7 +139,7 @@ export function FractalSphere() {
       []
     );
     
-  const updateColors = useCallback((transitionProgress = 1) => {
+  const updateColors = useCallback((transitionProgress = 0) => {
     if (!mindStoneGroupRef.current) return;
     
     const stableColorFunc = colorFunctions[colorScheme];
@@ -204,7 +202,8 @@ export function FractalSphere() {
                 });
             }
              if (child.name === 'nucleus' && child instanceof THREE.Mesh) {
-                (child.material as THREE.MeshBasicMaterial).color = getColor(0.5);
+                const nucleusColor = new THREE.Color(0x00ffff).lerp(new THREE.Color(0x111111), transitionProgress);
+                (child.material as THREE.MeshBasicMaterial).color = nucleusColor;
             }
         });
     }
@@ -404,7 +403,7 @@ export function FractalSphere() {
 
   useEffect(() => {
     setupScene();
-    lastStateChangeTimeRef.current = clockRef.current.getElapsedTime();
+    
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
@@ -423,40 +422,13 @@ export function FractalSphere() {
       const delta = clockRef.current.getDelta();
       const elapsedTime = clockRef.current.getElapsedTime();
       const timeFactor = parseFloat(speed);
-
-      // Animation cycle logic
-      const timeSinceLastChange = elapsedTime - lastStateChangeTimeRef.current;
-      const TRANSITION_DURATION = 3; // seconds
-
-      switch (animationStateRef.current) {
-        case 'stable':
-          if (timeSinceLastChange > 30) {
-            animationStateRef.current = 'energizing';
-            lastStateChangeTimeRef.current = elapsedTime;
-          }
-          break;
-        case 'energizing':
-          transitionProgressRef.current = Math.min(1, timeSinceLastChange / TRANSITION_DURATION);
-          if (transitionProgressRef.current >= 1) {
-            animationStateRef.current = 'energized';
-            lastStateChangeTimeRef.current = elapsedTime;
-          }
-          break;
-        case 'energized':
-          if (timeSinceLastChange > 15) {
-            animationStateRef.current = 'stabilizing';
-            lastStateChangeTimeRef.current = elapsedTime;
-          }
-          break;
-        case 'stabilizing':
-          transitionProgressRef.current = 1 - Math.min(1, timeSinceLastChange / TRANSITION_DURATION);
-          if (transitionProgressRef.current <= 0) {
-            animationStateRef.current = 'stable';
-            lastStateChangeTimeRef.current = elapsedTime;
-          }
-          break;
-      }
       
+      const TRANSITION_SPEED = delta * 2.0;
+      if (isEnergized) {
+        transitionProgressRef.current = Math.min(1, transitionProgressRef.current + TRANSITION_SPEED);
+      } else {
+        transitionProgressRef.current = Math.max(0, transitionProgressRef.current - TRANSITION_SPEED);
+      }
       updateColors(transitionProgressRef.current);
 
       if (isPlaying) {
@@ -496,9 +468,8 @@ export function FractalSphere() {
         if (atomGroupRef.current) {
             const nucleus = atomGroupRef.current.getObjectByName('nucleus') as THREE.Mesh;
             if (nucleus) {
-                const coreGlow = (Math.sin(elapsedTime * 2) + 1) / 2 * 0.3 + 0.7; // 0.7 to 1.0
-                (nucleus.material as THREE.MeshBasicMaterial).color.setHSL(0.55, 1.0, coreGlow * 0.6 * (1 - transitionProgressRef.current));
-                (nucleus.material as THREE.MeshBasicMaterial).opacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.6 * (1 - transitionProgressRef.current);
+                const baseOpacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.6;
+                (nucleus.material as THREE.MeshBasicMaterial).opacity = baseOpacity * (1 - transitionProgressRef.current);
             }
 
             atomGroupRef.current.children.forEach(child => {
@@ -611,7 +582,7 @@ export function FractalSphere() {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [speed, isPlaying, intensity, nodeCount, setupScene, updateColors]);
+  }, [speed, isPlaying, intensity, nodeCount, setupScene, updateColors, isEnergized]);
   
   useEffect(() => {
     updateColors(transitionProgressRef.current);
@@ -622,11 +593,8 @@ export function FractalSphere() {
     controlsRef.current.reset();
     mindStoneGroupRef.current.rotation.set(0, 0, 0);
     mindStoneGroupRef.current.scale.set(1, 1, 1);
-    clockRef.current.start();
-    animationStateRef.current = 'stable';
+    setIsEnergized(false);
     transitionProgressRef.current = 0;
-    lastStateChangeTimeRef.current = clockRef.current.getElapsedTime();
-
   }, []);
   
   const handleScreenshot = useCallback(() => {
@@ -686,6 +654,13 @@ export function FractalSphere() {
               <Maximize className="h-4 w-4" />
             </Button>
           </div>
+
+          <Separator />
+
+          <Button variant={isEnergized ? "default" : "outline"} onClick={() => setIsEnergized(!isEnergized)}>
+            <Zap className="h-4 w-4 mr-2" />
+            {isEnergized ? 'Stabilize' : 'Energize'}
+          </Button>
 
           <Separator />
           
