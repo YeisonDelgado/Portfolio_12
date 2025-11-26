@@ -252,7 +252,7 @@ export function FractalSphere() {
       fog: false,
     });
 
-    const lineCount = 5; // Number of lines to superimpose
+    const lineCount = 15; // Number of lines to superimpose
     const radiusStep = 0.005; // Distance between each line
 
     for (let i = 0; i < 3; i++) {
