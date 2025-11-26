@@ -69,7 +69,6 @@ export function FractalSphere() {
   const statsRef = useRef<Stats>();
   const mindStoneGroupRef = useRef<THREE.Group>();
   const cometsRef = useRef<THREE.Group>();
-  const neuronBranchesRef = useRef<THREE.Group>();
   const atomGroupRef = useRef<THREE.Group>();
   const clockRef = useRef(new THREE.Clock());
 
@@ -174,19 +173,6 @@ export function FractalSphere() {
         });
     }
 
-    if(neuronBranchesRef.current) {
-        neuronBranchesRef.current.children.forEach(child => {
-            if (child.name === 'neuron-branch-pulse') {
-                const pulse = child as THREE.Mesh;
-                (pulse.material as THREE.MeshBasicMaterial).color = colorFunc(0.2);
-            }
-            if (child.name === 'neuron-branch-tube') {
-                const tube = child as THREE.Mesh;
-                (tube.material as THREE.MeshBasicMaterial).color = colorFunc(0.7);
-            }
-        });
-    }
-
     if (atomGroupRef.current) {
         atomGroupRef.current.children.forEach(child => {
             if (child.name === 'orbit' && child instanceof THREE.Line) {
@@ -256,7 +242,7 @@ export function FractalSphere() {
     mindStoneGroup.add(atomGroup);
     
     const nucleusGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.1, 32, 32);
-    const nucleusMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false });
+    const nucleusMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false, transparent: true, opacity: 0.8 });
     const nucleus = new THREE.Mesh(nucleusGeo, nucleusMat);
     nucleus.name = "nucleus";
     atomGroup.add(nucleus);
@@ -267,6 +253,7 @@ export function FractalSphere() {
       transparent: true,
       opacity: 0.3,
       fog: false,
+      linewidth: 2,
     });
 
     for (let i = 0; i < 3; i++) {
@@ -341,57 +328,6 @@ export function FractalSphere() {
     }
     mindStoneGroup.add(cometsGroup);
 
-    // Neuron Branches
-    const branchesGroup = new THREE.Group();
-    neuronBranchesRef.current = branchesGroup;
-
-    for (let i = 0; i < 2; i++) {
-        const points = [new THREE.Vector3(0, 0, 0)];
-        const branchDirection = new THREE.Vector3().randomDirection();
-        for(let j=1; j<5; j++) { // Reduced to 4 segments for smoother curves
-            const randomOffset = new THREE.Vector3(
-                (Math.random() - 0.5),
-                (Math.random() - 0.5),
-                (Math.random() - 0.5)
-            ).multiplyScalar(0.5); // Slightly more deviation for organic look
-            
-            const newPoint = branchDirection.clone().multiplyScalar(j * 0.4).add(randomOffset);
-            newPoint.clampLength(0, SPHERE_RADIUS); // Clamp length to stay within the sphere
-            
-            points.push(newPoint);
-        }
-
-        const curve = new THREE.CatmullRomCurve3(points);
-        const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.04, 8, false); 
-        const tubeMat = new THREE.MeshBasicMaterial({ 
-            color: 0x0099FF, 
-            transparent: true, 
-            opacity: 0.6, // Slightly more opaque
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-        });
-        const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
-        tubeMesh.name = "neuron-branch-tube";
-        branchesGroup.add(tubeMesh);
-
-        // A sphere to act as the internal glowing pulse
-        const pulseGeo = new THREE.SphereGeometry(0.06, 16, 16);
-        const pulseMat = new THREE.MeshBasicMaterial({ 
-            color: 0xccffff, 
-            transparent: true,
-            opacity: 0.9, // Brighter than the tube
-            blending: THREE.AdditiveBlending,
-        });
-        const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
-        pulseMesh.name = "neuron-branch-pulse";
-        pulseMesh.userData = {
-            curve: curve,
-            progress: Math.random(), // Start at a random point
-        };
-        branchesGroup.add(pulseMesh);
-    }
-    mindStoneGroup.add(branchesGroup);
-
     updateColors();
 
   }, [generateGeometry, updateColors]);
@@ -453,6 +389,7 @@ export function FractalSphere() {
             if (nucleus) {
                 const coreGlow = (Math.sin(elapsedTime * 2) + 1) / 2 * 0.3 + 0.7; // 0.7 to 1.0
                 (nucleus.material as THREE.MeshBasicMaterial).color.setHSL(0.5, 1.0, coreGlow * 0.5);
+                (nucleus.material as THREE.MeshBasicMaterial).opacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.8;
             }
 
             atomGroupRef.current.children.forEach(child => {
@@ -543,21 +480,6 @@ export function FractalSphere() {
                     phaseRef.current = 'random';
                 }
             }
-        }
-        
-        // Neuron branches animation
-        if (neuronBranchesRef.current) {
-            neuronBranchesRef.current.children.forEach(child => {
-                if (child.name === 'neuron-branch-pulse') {
-                    const pulse = child as THREE.Mesh;
-                    const { userData } = pulse;
-                    userData.progress += delta * 0.1 * timeFactor; // Slower speed
-                    if (userData.progress > 1) userData.progress = 0;
-                    
-                    const point = userData.curve.getPointAt(userData.progress);
-                    pulse.position.copy(point);
-                }
-            });
         }
       }
 
@@ -659,7 +581,7 @@ export function FractalSphere() {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="speed-select">Speed</Label>
-              <Select value={speed} onValue-change={(v: Speed) => setSpeed(v)}>
+              <Select value={speed} onValueChange={(v: Speed) => setSpeed(v)}>
                 <SelectTrigger id="speed-select">
                   <SelectValue placeholder="Speed" />
                 </SelectTrigger>
