@@ -48,6 +48,8 @@ const K_NEIGHBORS = 4;
 const SPARK_COUNT = 1000;
 const COMET_LENGTH = 0.02;
 
+type CometPhase = 'random' | 'wave';
+
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -59,6 +61,7 @@ export function FractalSphere() {
   const [nodeCount, setNodeCount] = useState(400);
   const [info, setInfo] = useState({ neurons: 0, connections: 0 });
 
+  // Refs for Three.js objects
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
@@ -67,6 +70,12 @@ export function FractalSphere() {
   const mindStoneGroupRef = useRef<THREE.Group>();
   const cometsRef = useRef<THREE.Group>();
   const clockRef = useRef(new THREE.Clock());
+
+  // Refs for animation logic state
+  const iterationCycleRef = useRef(0);
+  const phaseRef = useRef<CometPhase>('random');
+  const waveAxisRef = useRef(new THREE.Vector3().randomDirection());
+
 
   const generateGeometry = useCallback(() => {
     const points = [];
@@ -247,10 +256,10 @@ export function FractalSphere() {
         const comet = new THREE.Line(cometGeo, cometMat);
         comet.userData = {
             direction: new THREE.Vector3().randomDirection(),
-            progress: Math.random(), // Random initial progress
+            progress: Math.random(),
             speed: (Math.random() * 0.2 + 0.15),
-            delay: Math.random() * 5, // Wait time before firing
-            travelOutward: i < SPARK_COUNT / 2 // Half travel outward, half inward
+            delay: Math.random() * 5,
+            travelOutward: i < SPARK_COUNT / 2 
         };
         cometsGroup.add(comet);
     }
@@ -271,6 +280,7 @@ export function FractalSphere() {
     window.addEventListener('resize', handleResize);
     
     let animationFrameId: number;
+    let completedComets = 0;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
@@ -325,10 +335,21 @@ export function FractalSphere() {
                 }
                 
                 (comet.material as THREE.Material).opacity = 1;
-                userData.progress += userData.speed * delta * timeFactor;
-                
+
+                let effectiveSpeed = userData.speed;
+                if (phaseRef.current === 'wave') {
+                    const dot = userData.direction.dot(waveAxisRef.current); // -1 to 1
+                    // Make comets travel faster as part of the wave front
+                    effectiveSpeed = userData.speed * 1.5;
+                    // Delay comets based on their position relative to the wave axis
+                    const waveDelay = (1 - dot) * 2.5; // Comets opposite to axis are delayed most
+                    userData.progress += (effectiveSpeed * delta * timeFactor) - (waveDelay * 0.001);
+                } else {
+                    userData.progress += effectiveSpeed * delta * timeFactor;
+                }
+
                 let headProgress = userData.travelOutward ? userData.progress : 1 - userData.progress;
-                headProgress = Math.max(0, Math.min(1, headProgress)); // Clamp between 0 and 1
+                headProgress = Math.max(0, Math.min(1, headProgress));
 
                 const tailProgress = userData.travelOutward 
                     ? Math.max(0, headProgress - COMET_LENGTH) 
@@ -343,12 +364,36 @@ export function FractalSphere() {
                 (comet.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
 
                 if (userData.progress >= 1.0) {
-                    // Reset comet
                     userData.progress = 0;
-                    userData.direction.randomDirection();
-                    userData.delay = Math.random() * 5 + 2; // Wait for a random time before firing again
+                    completedComets++;
+
+                    if (phaseRef.current === 'random') {
+                       userData.direction.randomDirection();
+                       userData.delay = Math.random() * 5 + 2;
+                    } else {
+                       // In wave mode, they just reset progress and wait for the wave
+                       userData.delay = 0;
+                    }
                 }
             });
+
+             // Phase transition logic
+            if (completedComets >= SPARK_COUNT) {
+                completedComets = 0;
+                iterationCycleRef.current++;
+                
+                if (iterationCycleRef.current > 2 && iterationCycleRef.current <= 8) {
+                    phaseRef.current = 'wave';
+                    if (iterationCycleRef.current === 3) { // New wave starts
+                        waveAxisRef.current.randomDirection();
+                    }
+                } else if (iterationCycleRef.current > 8) {
+                    phaseRef.current = 'random';
+                    iterationCycleRef.current = 0; // Reset cycle
+                } else {
+                    phaseRef.current = 'random';
+                }
+            }
         }
       }
 
@@ -482,5 +527,3 @@ export function FractalSphere() {
     </>
   );
 }
-
-    
