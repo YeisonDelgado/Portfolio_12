@@ -285,28 +285,26 @@ export function FractalSphere() {
 
     for (let i = 0; i < 2; i++) {
         const points = [new THREE.Vector3(0, 0, 0)];
-        let lastPoint = new THREE.Vector3(0, 0, 0);
         const branchDirection = new THREE.Vector3().randomDirection();
-        for(let j=1; j<15; j++) {
+        for(let j=1; j<5; j++) { // Reduced to 4 segments for smoother curves
             const randomOffset = new THREE.Vector3(
                 (Math.random() - 0.5),
                 (Math.random() - 0.5),
                 (Math.random() - 0.5)
-            ).multiplyScalar(0.25);
+            ).multiplyScalar(0.5); // Slightly more deviation for organic look
             
-            const newPoint = branchDirection.clone().multiplyScalar(j * 0.15).add(randomOffset);
-            newPoint.clampLength(0, SPHERE_RADIUS * 1.1); // Allow to slightly exceed for a better look
+            const newPoint = branchDirection.clone().multiplyScalar(j * 0.4).add(randomOffset);
+            newPoint.clampLength(0, SPHERE_RADIUS); // Clamp length to stay within the sphere
             
             points.push(newPoint);
-            lastPoint = newPoint;
         }
 
         const curve = new THREE.CatmullRomCurve3(points);
-        const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.02, 8, false); // Tapering would be custom
+        const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.04, 8, false); 
         const tubeMat = new THREE.MeshBasicMaterial({ 
             color: 0x0099FF, 
             transparent: true, 
-            opacity: 0.4,
+            opacity: 0.6, // Slightly more opaque
             blending: THREE.AdditiveBlending,
             depthWrite: false,
         });
@@ -314,15 +312,13 @@ export function FractalSphere() {
         tubeMesh.name = "neuron-branch-tube";
         branchesGroup.add(tubeMesh);
 
-        // A short, wide cylinder to act as the glowing band
-        const pulseGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 16, 1, true);
-        pulseGeo.rotateX(Math.PI / 2); // Orient it to slide along the tube
+        // A sphere to act as the internal glowing pulse
+        const pulseGeo = new THREE.SphereGeometry(0.06, 16, 16);
         const pulseMat = new THREE.MeshBasicMaterial({ 
             color: 0xccffff, 
             transparent: true,
-            opacity: 0.7,
+            opacity: 0.9, // Brighter than the tube
             blending: THREE.AdditiveBlending,
-            side: THREE.DoubleSide
         });
         const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
         pulseMesh.name = "neuron-branch-pulse";
@@ -473,17 +469,11 @@ export function FractalSphere() {
                 if (child.name === 'neuron-branch-pulse') {
                     const pulse = child as THREE.Mesh;
                     const { userData } = pulse;
-                    userData.progress += delta * 0.2 * timeFactor;
+                    userData.progress += delta * 0.1 * timeFactor; // Slower speed
                     if (userData.progress > 1) userData.progress = 0;
                     
                     const point = userData.curve.getPointAt(userData.progress);
                     pulse.position.copy(point);
-
-                    // Orient the ring to be perpendicular to the curve's tangent
-                    const tangent = userData.curve.getTangentAt(userData.progress).normalize();
-                    axis.crossVectors(up, tangent).normalize();
-                    const radians = Math.acos(up.dot(tangent));
-                    pulse.quaternion.setFromAxisAngle(axis, radians);
                 }
             });
         }
