@@ -109,13 +109,10 @@ export function FractalSphere() {
     const connectionCount = lines.length / 2;
 
     const originPositions = new Float32Array(lines.length * 3);
-    const endPositions = new Float32Array(lines.length * 3);
     for (let i = 0; i < lines.length; i++) {
-      lines[i].toArray(originPositions, i * 3);
-      new THREE.Vector3(0, 0, 0).toArray(endPositions, i * 3);
+        lines[i].toArray(originPositions, i * 3);
     }
     geometry.setAttribute('originPosition', new THREE.BufferAttribute(originPositions, 3));
-    geometry.setAttribute('endPosition', new THREE.BufferAttribute(endPositions, 3));
     
     return { geometry, neuronCount, connectionCount };
   }, [nodeCount]);
@@ -356,31 +353,37 @@ export function FractalSphere() {
       if (isPlaying) {
         mindStoneGroupRef.current.rotation.y += 0.002 * timeFactor;
 
-        // Pulsation
-        const pulseCycle = (elapsedTime * (2 * Math.PI)) / 1.5;
-        const scale = 1 + Math.sin(pulseCycle) * 0.05;
-        mindStoneGroupRef.current.scale.set(scale, scale, scale);
-
-        // Neural network animation
+        // Neural network animation - localized pulse at the top
         const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
-        if(line && line.geometry) {
+        if (line && line.geometry) {
             const currentPos = line.geometry.attributes.position as THREE.BufferAttribute;
             const originPos = line.geometry.attributes.originPosition as THREE.BufferAttribute;
             
             const firingRate = intensity / 100;
-            const progress = (Math.sin(elapsedTime * timeFactor * firingRate * 2) + 1) / 2;
-            const easedProgress = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+            const pulseCycle = elapsedTime * timeFactor * firingRate * 2;
+            const pulseAmount = (Math.sin(pulseCycle) + 1) / 2; // 0 to 1
+            const easedPulse = 0.5 - 0.5 * Math.cos(pulseAmount * Math.PI); // ease in/out
 
             for (let i = 0; i < currentPos.count; i++) {
-                const x = THREE.MathUtils.lerp(0, originPos.getX(i), easedProgress);
-                const y = THREE.MathUtils.lerp(0, originPos.getY(i), easedProgress);
-                const z = THREE.MathUtils.lerp(0, originPos.getZ(i), easedProgress);
-                currentPos.setXYZ(i, x, y, z);
+                const ox = originPos.getX(i);
+                const oy = originPos.getY(i);
+                const oz = originPos.getZ(i);
+
+                // Calculate which vertices are at the top (y > 0)
+                const yNormalized = Math.max(0, oy / SPHERE_RADIUS);
+                // The pulse effect is strongest at the very top (y=1) and fades out towards the equator (y=0)
+                const pulseStrength = easedPulse * yNormalized * 0.4;
+                
+                const vertexVector = new THREE.Vector3(ox, oy, oz);
+                // Apply pulse only if the vertex is on the sphere surface (not at the center)
+                if (vertexVector.length() > 0.1) {
+                  vertexVector.normalize().multiplyScalar(SPHERE_RADIUS + pulseStrength);
+                }
+
+                currentPos.setXYZ(i, vertexVector.x, vertexVector.y, vertexVector.z);
             }
             currentPos.needsUpdate = true;
-            
-            // Glow intensity
-            (line.material as THREE.LineBasicMaterial).opacity = easedProgress * 0.5 + 0.2;
+            (line.material as THREE.LineBasicMaterial).opacity = easedPulse * 0.5 + 0.2;
         }
 
         // Atom animation
@@ -575,7 +578,7 @@ export function FractalSphere() {
           
           <div className="grid gap-2">
             <Label htmlFor="nodes-slider" className="flex items-center gap-2"><Network className="h-4 w-4" /> Neurons: {nodeCount}</Label>
-            <Slider id="nodes-slider" value={[nodeCount]} onValueChange={(v) => setNodeCount(v[0])} min={100} max={500} step={10} />
+            <Slider id="nodes-slider" value={[nodeCount]} onValueChange={(v) => setNodeCount(v[0])} min={40} max={500} step={10} />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
