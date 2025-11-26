@@ -45,6 +45,7 @@ type Speed = '0.5' | '1' | '2';
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
+const SPARK_COUNT = 50;
 
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -63,6 +64,7 @@ export function FractalSphere() {
   const controlsRef = useRef<OrbitControls>();
   const statsRef = useRef<Stats>();
   const mindStoneGroupRef = useRef<THREE.Group>();
+  const sparksRef = useRef<THREE.Points>();
   const clockRef = useRef(new THREE.Clock());
 
   const generateGeometry = useCallback(() => {
@@ -143,6 +145,11 @@ export function FractalSphere() {
     if (line.geometry.attributes.color) {
       line.geometry.attributes.color.needsUpdate = true;
     }
+
+    if (sparksRef.current) {
+      (sparksRef.current.material as THREE.PointsMaterial).color.set(colorFunc(0.5));
+    }
+
   }, [colorScheme, colorFunctions]);
   
   const setupScene = useCallback(() => {
@@ -209,6 +216,32 @@ export function FractalSphere() {
     lineSphere.name = "neural-net";
     mindStoneGroup.add(lineSphere);
 
+    // Sparks
+    const sparksGeometry = new THREE.BufferGeometry();
+    const sparksVertices = [];
+    const sparksVelocities = [];
+    for (let i = 0; i < SPARK_COUNT; i++) {
+        sparksVertices.push(0, 0, 0);
+        sparksVelocities.push({ 
+          vector: new THREE.Vector3().randomDirection(), 
+          speed: Math.random() * 2 + 1,
+          life: 0
+        });
+    }
+    sparksGeometry.setAttribute('position', new THREE.Float32BufferAttribute(sparksVertices, 3));
+    sparksGeometry.userData.velocities = sparksVelocities;
+    const sparksMaterial = new THREE.PointsMaterial({
+        size: 0.05,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+        sizeAttenuation: true,
+    });
+    const sparks = new THREE.Points(sparksGeometry, sparksMaterial);
+    sparks.name = "sparks";
+    mindStoneGroup.add(sparks);
+    sparksRef.current = sparks;
+
     updateColors();
 
   }, [generateGeometry, updateColors]);
@@ -229,6 +262,7 @@ export function FractalSphere() {
       animationFrameId = requestAnimationFrame(animate);
       if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !mindStoneGroupRef.current) return;
 
+      const delta = clockRef.current.getDelta();
       const elapsedTime = clockRef.current.getElapsedTime();
       const timeFactor = parseFloat(speed);
 
@@ -262,7 +296,38 @@ export function FractalSphere() {
             (line.material as THREE.LineBasicMaterial).opacity = easedProgress * 0.5 + 0.2;
             const coreSphere = mindStoneGroupRef.current.children[0] as THREE.Mesh;
             (coreSphere.material as THREE.MeshBasicMaterial).color.setHSL(0.5, 1.0, easedProgress * 0.2 + 0.4);
+        }
 
+        // Sparks animation
+        if (sparksRef.current) {
+            const sparksGeo = sparksRef.current.geometry;
+            const positions = sparksGeo.attributes.position.array as Float32Array;
+            const velocities = sparksGeo.userData.velocities;
+
+            for (let i = 0; i < SPARK_COUNT; i++) {
+                const i3 = i * 3;
+                if (velocities[i].life <= 0) {
+                  // Reset spark
+                  positions[i3] = 0;
+                  positions[i3 + 1] = 0;
+                  positions[i3 + 2] = 0;
+                  velocities[i].vector.randomDirection();
+                  velocities[i].speed = Math.random() * 2 + 1;
+                  velocities[i].life = Math.random(); // Random start time
+                } else {
+                  const velocity = velocities[i].vector.clone().multiplyScalar(velocities[i].speed * delta * timeFactor * 5);
+                  positions[i3] += velocity.x;
+                  positions[i3 + 1] += velocity.y;
+                  positions[i3 + 2] += velocity.z;
+                  velocities[i].life -= delta * 0.5;
+
+                  const dist = Math.sqrt(positions[i3]**2 + positions[i3+1]**2 + positions[i3+2]**2);
+                  if (dist > SPHERE_RADIUS) {
+                    velocities[i].life = 0;
+                  }
+                }
+            }
+            sparksGeo.attributes.position.needsUpdate = true;
         }
       }
 
