@@ -46,7 +46,7 @@ type Speed = '0.5' | '1' | '2';
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
 const SPARK_COUNT = 1000;
-const COMET_LENGTH = 0.02;
+const COMET_LENGTH = 0.01;
 
 type CometPhase = 'random' | 'wave';
 
@@ -261,7 +261,7 @@ export function FractalSphere() {
 
         const cometMat = new THREE.LineBasicMaterial({ 
             vertexColors: true, 
-            linewidth: 4,
+            linewidth: 2, // Increased width
             transparent: true,
             blending: THREE.AdditiveBlending,
             depthWrite: false,
@@ -271,7 +271,7 @@ export function FractalSphere() {
         comet.userData = {
             direction: new THREE.Vector3().randomDirection(),
             progress: Math.random(),
-            speed: (Math.random() * 0.2 + 0.15),
+            speed: (Math.random() * 0.2 + 0.25), // A bit faster
             delay: Math.random() * 5,
             travelOutward: i < SPARK_COUNT / 2 
         };
@@ -291,7 +291,7 @@ export function FractalSphere() {
                 lastPoint.x + (Math.random() - 0.5) * 1.5,
                 lastPoint.y + (Math.random() - 0.5) * 1.5,
                 lastPoint.z + (Math.random() - 0.5) * 1.5,
-            ).clampLength(0, SPHERE_RADIUS * (j/8));
+            ).clampLength(0, SPHERE_RADIUS * (j/7)); // Adjust to stay within sphere
             points.push(newPoint);
             lastPoint = newPoint;
         }
@@ -309,7 +309,7 @@ export function FractalSphere() {
         tubeMesh.name = "neuron-branch-tube";
         branchesGroup.add(tubeMesh);
 
-        const pulseGeo = new THREE.SphereGeometry(0.1, 16, 16);
+        const pulseGeo = new THREE.TorusGeometry(0.08, 0.02, 8, 24);
         const pulseMat = new THREE.MeshBasicMaterial({ color: 0xccffff, transparent: false });
         const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
         pulseMesh.name = "neuron-branch-pulse";
@@ -337,6 +337,9 @@ export function FractalSphere() {
     
     let animationFrameId: number;
     let completedComets = 0;
+    const tangent = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
+    const axis = new THREE.Vector3();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
@@ -458,16 +461,17 @@ export function FractalSphere() {
                 if (child.name === 'neuron-branch-pulse') {
                     const pulse = child as THREE.Mesh;
                     const { userData } = pulse;
-                    userData.progress += delta * 0.1 * timeFactor; // Slower speed
+                    userData.progress += delta * 0.2 * timeFactor; // Faster speed
                     if (userData.progress > 1) userData.progress = 0;
                     
                     const point = userData.curve.getPointAt(userData.progress);
                     pulse.position.copy(point);
 
-                    // Pulse glow
-                    const pulseGlowCycle = (elapsedTime * (2 * Math.PI)) / 0.5;
-                    const pulseGlow = 1 + Math.sin(pulseGlowCycle) * 0.2;
-                    pulse.scale.set(pulseGlow, pulseGlow, pulseGlow);
+                    // Orient the ring to be perpendicular to the curve's tangent
+                    const tangent = userData.curve.getTangentAt(userData.progress).normalize();
+                    axis.crossVectors(up, tangent).normalize();
+                    const radians = Math.acos(up.dot(tangent));
+                    pulse.quaternion.setFromAxisAngle(axis, radians);
                 }
             });
         }
@@ -571,7 +575,7 @@ export function FractalSphere() {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="speed-select">Speed</Label>
-              <Select value={speed} onValueChange={(v: Speed) => setSpeed(v)}>
+              <Select value={speed} onValueeChange={(v: Speed) => setSpeed(v)}>
                 <SelectTrigger id="speed-select">
                   <SelectValue placeholder="Speed" />
                 </SelectTrigger>
