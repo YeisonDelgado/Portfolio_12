@@ -45,7 +45,7 @@ type Speed = '0.5' | '1' | '2';
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
-const SPARK_COUNT = 50;
+const SPARK_COUNT = 3;
 
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -224,8 +224,8 @@ export function FractalSphere() {
         sparksVertices.push(0, 0, 0);
         sparksVelocities.push({ 
           vector: new THREE.Vector3().randomDirection(), 
-          speed: Math.random() * 2 + 1,
-          life: 0
+          speed: Math.random() * 0.5 + 0.5,
+          life: Math.random() * -3 // Stagger their start time
         });
     }
     sparksGeometry.setAttribute('position', new THREE.Float32BufferAttribute(sparksVertices, 3));
@@ -306,24 +306,24 @@ export function FractalSphere() {
 
             for (let i = 0; i < SPARK_COUNT; i++) {
                 const i3 = i * 3;
-                if (velocities[i].life <= 0) {
-                  // Reset spark
-                  positions[i3] = 0;
-                  positions[i3 + 1] = 0;
-                  positions[i3 + 2] = 0;
-                  velocities[i].vector.randomDirection();
-                  velocities[i].speed = Math.random() * 2 + 1;
-                  velocities[i].life = Math.random(); // Random start time
-                } else {
+                
+                velocities[i].life += delta;
+
+                if (velocities[i].life > 0) {
                   const velocity = velocities[i].vector.clone().multiplyScalar(velocities[i].speed * delta * timeFactor * 5);
                   positions[i3] += velocity.x;
                   positions[i3 + 1] += velocity.y;
                   positions[i3 + 2] += velocity.z;
-                  velocities[i].life -= delta * 0.5;
 
                   const dist = Math.sqrt(positions[i3]**2 + positions[i3+1]**2 + positions[i3+2]**2);
                   if (dist > SPHERE_RADIUS) {
-                    velocities[i].life = 0;
+                      // Reset spark
+                      positions[i3] = 0;
+                      positions[i3 + 1] = 0;
+                      positions[i3 + 2] = 0;
+                      velocities[i].vector.randomDirection();
+                      velocities[i].speed = Math.random() * 0.5 + 0.5;
+                      velocities[i].life = Math.random() * -5; // Wait for a random time before firing again
                   }
                 }
             }
