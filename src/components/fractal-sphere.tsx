@@ -250,7 +250,7 @@ export function FractalSphere() {
       transparent: true,
       opacity: 0.5,
       fog: false,
-      linewidth: 5,
+      linewidth: 10,
     });
 
     for (let i = 0; i < 3; i++) {
