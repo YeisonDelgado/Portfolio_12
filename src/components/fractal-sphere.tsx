@@ -69,6 +69,7 @@ export function FractalSphere() {
   const statsRef = useRef<Stats>();
   const mindStoneGroupRef = useRef<THREE.Group>();
   const cometsRef = useRef<THREE.Group>();
+  const neuronBranchesRef = useRef<THREE.Group>();
   const clockRef = useRef(new THREE.Clock());
 
   // Refs for animation logic state
@@ -170,6 +171,19 @@ export function FractalSphere() {
         });
     }
 
+    if(neuronBranchesRef.current) {
+        neuronBranchesRef.current.children.forEach(child => {
+            if (child.name === 'neuron-branch-pulse') {
+                const pulse = child as THREE.Mesh;
+                (pulse.material as THREE.MeshBasicMaterial).color = colorFunc(0.2);
+            }
+            if (child.name === 'neuron-branch-tube') {
+                const tube = child as THREE.Mesh;
+                (tube.material as THREE.MeshBasicMaterial).color = colorFunc(0.7);
+            }
+        });
+    }
+
   }, [colorScheme, colorFunctions]);
   
   const setupScene = useCallback(() => {
@@ -264,6 +278,48 @@ export function FractalSphere() {
         cometsGroup.add(comet);
     }
     mindStoneGroup.add(cometsGroup);
+
+    // Neuron Branches
+    const branchesGroup = new THREE.Group();
+    neuronBranchesRef.current = branchesGroup;
+
+    for (let i = 0; i < 2; i++) {
+        const points = [new THREE.Vector3(0, 0, 0)];
+        let lastPoint = new THREE.Vector3(0, 0, 0);
+        for(let j=1; j<5; j++) {
+            const newPoint = new THREE.Vector3(
+                lastPoint.x + (Math.random() - 0.5) * 1.5,
+                lastPoint.y + (Math.random() - 0.5) * 1.5,
+                lastPoint.z + (Math.random() - 0.5) * 1.5,
+            ).clampLength(j * 0.6, j * 0.6 + 0.2);
+            points.push(newPoint);
+            lastPoint = newPoint;
+        }
+
+        const curve = new THREE.CatmullRomCurve3(points);
+        const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.05, 8, false);
+        const tubeMat = new THREE.MeshBasicMaterial({ 
+            color: 0x0099FF, 
+            transparent: true, 
+            opacity: 0.4,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+        });
+        const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+        tubeMesh.name = "neuron-branch-tube";
+        branchesGroup.add(tubeMesh);
+
+        const pulseGeo = new THREE.SphereGeometry(0.1, 16, 16);
+        const pulseMat = new THREE.MeshBasicMaterial({ color: 0xccffff, transparent: false });
+        const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
+        pulseMesh.name = "neuron-branch-pulse";
+        pulseMesh.userData = {
+            curve: curve,
+            progress: Math.random(), // Start at a random point
+        };
+        branchesGroup.add(pulseMesh);
+    }
+    mindStoneGroup.add(branchesGroup);
 
     updateColors();
 
@@ -394,6 +450,26 @@ export function FractalSphere() {
                     phaseRef.current = 'random';
                 }
             }
+        }
+        
+        // Neuron branches animation
+        if (neuronBranchesRef.current) {
+            neuronBranchesRef.current.children.forEach(child => {
+                if (child.name === 'neuron-branch-pulse') {
+                    const pulse = child as THREE.Mesh;
+                    const { userData } = pulse;
+                    userData.progress += delta * 0.1 * timeFactor; // Slower speed
+                    if (userData.progress > 1) userData.progress = 0;
+                    
+                    const point = userData.curve.getPointAt(userData.progress);
+                    pulse.position.copy(point);
+
+                    // Pulse glow
+                    const pulseGlowCycle = (elapsedTime * (2 * Math.PI)) / 0.5;
+                    const pulseGlow = 1 + Math.sin(pulseGlowCycle) * 0.2;
+                    pulse.scale.set(pulseGlow, pulseGlow, pulseGlow);
+                }
+            });
         }
       }
 
