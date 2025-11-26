@@ -45,7 +45,7 @@ type Speed = '0.5' | '1' | '2';
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
-const SPARK_COUNT = 3;
+const SPARK_COUNT = 10;
 
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -225,7 +225,7 @@ export function FractalSphere() {
         sparksVelocities.push({ 
           vector: new THREE.Vector3().randomDirection(), 
           speed: Math.random() * 0.5 + 0.5,
-          life: Math.random() * -3 // Stagger their start time
+          life: Math.random() * -5 // Stagger their start time
         });
     }
     sparksGeometry.setAttribute('position', new THREE.Float32BufferAttribute(sparksVertices, 3));
@@ -310,7 +310,7 @@ export function FractalSphere() {
                 velocities[i].life += delta;
 
                 if (velocities[i].life > 0) {
-                  const velocity = velocities[i].vector.clone().multiplyScalar(velocities[i].speed * delta * timeFactor * 5);
+                  const velocity = velocities[i].vector.clone().multiplyScalar(velocities[i].speed * delta * timeFactor * 1);
                   positions[i3] += velocity.x;
                   positions[i3 + 1] += velocity.y;
                   positions[i3 + 2] += velocity.z;
@@ -461,3 +461,5 @@ export function FractalSphere() {
     </>
   );
 }
+
+    
