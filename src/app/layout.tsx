@@ -3,9 +3,36 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Ultron Mind Stone Visualizer - Neural Consciousness Explorer',
+  title: 'Interactive Fractal Sphere - Dynamic Neural Network Visualization',
   description:
-    'Witness the digital consciousness of an AI mind through dynamic neural pathways',
+    'Explore a stunning interactive fractal sphere. An immersive 3D visualization of a dynamic neural network with customizable energy states and real-time effects.',
+  keywords: [
+    'Three.js',
+    'React',
+    'Next.js',
+    '3D Visualization',
+    'Fractal',
+    'Generative Art',
+    'Interactive',
+    'Neural Network',
+    'WebGL',
+  ],
+  creator: 'Firebase Studio',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://your-app-url.com', // Replace with your actual URL
+    title: 'Interactive Fractal Sphere',
+    description: 'A stunning 3D visualization of a dynamic neural network.',
+    images: [
+      {
+        url: 'https://picsum.photos/seed/1/1200/630', // Replace with a preview image of your app
+        width: 1200,
+        height: 630,
+        alt: 'Interactive Fractal Sphere Visualization',
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
