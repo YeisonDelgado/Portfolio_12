@@ -42,6 +42,7 @@ type ColorScheme =
   | 'Quantum Purple'
   | 'Sunset';
 type Speed = '0.5' | '1' | '2';
+type AnimationState = 'stable' | 'energizing' | 'energized' | 'stabilizing';
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
@@ -76,6 +77,11 @@ export function FractalSphere() {
   const iterationCycleRef = useRef(0);
   const phaseRef = useRef<CometPhase>('random');
   const waveAxisRef = useRef(new THREE.Vector3().randomDirection());
+
+  // State for automatic energizing cycle
+  const animationStateRef = useRef<AnimationState>('stable');
+  const lastStateChangeTimeRef = useRef(0);
+  const transitionProgressRef = useRef(0);
 
 
   const generateGeometry = useCallback(() => {
@@ -117,7 +123,7 @@ export function FractalSphere() {
     return { geometry, neuronCount, connectionCount };
   }, [nodeCount]);
 
-  const colorFunctions: Record<ColorScheme, (t: number) => THREE.Color> =
+  const colorFunctions: Record<ColorScheme | 'Fire', (t: number) => THREE.Color> =
     useMemo(
       () => ({
         'Original Blue': (t: number) => new THREE.Color().setHSL(0.55 + t * 0.2, 1.0, 0.5),
@@ -130,13 +136,22 @@ export function FractalSphere() {
         'Matrix Green': (t: number) => new THREE.Color().setHSL(0.35, 1.0, t * 0.4 + 0.3),
         'Quantum Purple': (t: number) => new THREE.Color().setHSL(0.75 + t * 0.1, 0.9, 0.6),
         Sunset: (t: number) => new THREE.Color().setHSL(t * 0.1 + 0.0, 0.9, 0.6),
+        Fire: (t: number) => new THREE.Color().setHSL(0.05 + t * 0.1, 1.0, 0.5),
       }),
       []
     );
-
-  const updateColors = useCallback(() => {
+    
+  const updateColors = useCallback((transitionProgress = 1) => {
     if (!mindStoneGroupRef.current) return;
-    const colorFunc = colorFunctions[colorScheme];
+    
+    const stableColorFunc = colorFunctions[colorScheme];
+    const energizedColorFunc = colorFunctions['Fire'];
+
+    const getColor = (t: number) => {
+        const stableColor = stableColorFunc(t);
+        const energizedColor = energizedColorFunc(t);
+        return stableColor.lerp(energizedColor, transitionProgress);
+    };
 
     const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
     if (line && line.geometry) {
@@ -146,7 +161,7 @@ export function FractalSphere() {
 
         for (let i = 0; i < count; i++) {
           const t = i / count;
-          const color = colorFunc(t);
+          const color = getColor(t);
           colors.push(color.r, color.g, color.b);
         }
         line.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -161,7 +176,7 @@ export function FractalSphere() {
             const comet = child as THREE.Line;
             if (comet.material instanceof THREE.LineBasicMaterial) {
                 const colors = [];
-                const color = colorFunc(0.5);
+                const color = getColor(0.5);
                 colors.push(color.r * 0.2, color.g * 0.2, color.b * 0.2); // Tail color
                 colors.push(color.r, color.g, color.b); // Head color
                 (comet.geometry as THREE.BufferGeometry).setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -179,17 +194,17 @@ export function FractalSphere() {
                 child.traverse(obj => {
                     if (obj instanceof THREE.Mesh && obj.name === 'electron-core') {
                         const electronMaterial = (obj.material as THREE.MeshStandardMaterial);
-                        const color = colorFunc(0.5);
+                        const color = getColor(0.5);
                         electronMaterial.color.set(color);
                         electronMaterial.emissive.set(color);
                     }
                     if (obj instanceof THREE.Sprite && obj.name === 'electron-glow') {
-                        (obj.material as THREE.SpriteMaterial).color.set(colorFunc(0.5));
+                        (obj.material as THREE.SpriteMaterial).color.set(getColor(0.5));
                     }
                 });
             }
              if (child.name === 'nucleus' && child instanceof THREE.Mesh) {
-                (child.material as THREE.MeshBasicMaterial).color = colorFunc(0.5);
+                (child.material as THREE.MeshBasicMaterial).color = getColor(0.5);
             }
         });
     }
@@ -321,7 +336,7 @@ export function FractalSphere() {
           curve: electronCurve,
           orbitRotation: orbitRotation,
           progress: Math.random(),
-          speed: (Math.random() * 0.1 + 0.15)
+          baseSpeed: (Math.random() * 0.05 + 0.075),
       };
       atomGroup.add(electronGroup);
     }
@@ -389,6 +404,7 @@ export function FractalSphere() {
 
   useEffect(() => {
     setupScene();
+    lastStateChangeTimeRef.current = clockRef.current.getElapsedTime();
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
@@ -407,6 +423,41 @@ export function FractalSphere() {
       const delta = clockRef.current.getDelta();
       const elapsedTime = clockRef.current.getElapsedTime();
       const timeFactor = parseFloat(speed);
+
+      // Animation cycle logic
+      const timeSinceLastChange = elapsedTime - lastStateChangeTimeRef.current;
+      const TRANSITION_DURATION = 3; // seconds
+
+      switch (animationStateRef.current) {
+        case 'stable':
+          if (timeSinceLastChange > 30) {
+            animationStateRef.current = 'energizing';
+            lastStateChangeTimeRef.current = elapsedTime;
+          }
+          break;
+        case 'energizing':
+          transitionProgressRef.current = Math.min(1, timeSinceLastChange / TRANSITION_DURATION);
+          if (transitionProgressRef.current >= 1) {
+            animationStateRef.current = 'energized';
+            lastStateChangeTimeRef.current = elapsedTime;
+          }
+          break;
+        case 'energized':
+          if (timeSinceLastChange > 15) {
+            animationStateRef.current = 'stabilizing';
+            lastStateChangeTimeRef.current = elapsedTime;
+          }
+          break;
+        case 'stabilizing':
+          transitionProgressRef.current = 1 - Math.min(1, timeSinceLastChange / TRANSITION_DURATION);
+          if (transitionProgressRef.current <= 0) {
+            animationStateRef.current = 'stable';
+            lastStateChangeTimeRef.current = elapsedTime;
+          }
+          break;
+      }
+      
+      updateColors(transitionProgressRef.current);
 
       if (isPlaying) {
         mindStoneGroupRef.current.rotation.y += 0.002 * timeFactor;
@@ -446,8 +497,8 @@ export function FractalSphere() {
             const nucleus = atomGroupRef.current.getObjectByName('nucleus') as THREE.Mesh;
             if (nucleus) {
                 const coreGlow = (Math.sin(elapsedTime * 2) + 1) / 2 * 0.3 + 0.7; // 0.7 to 1.0
-                (nucleus.material as THREE.MeshBasicMaterial).color.setHSL(0.55, 1.0, coreGlow * 0.6);
-                (nucleus.material as THREE.MeshBasicMaterial).opacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.6;
+                (nucleus.material as THREE.MeshBasicMaterial).color.setHSL(0.55, 1.0, coreGlow * 0.6 * (1 - transitionProgressRef.current));
+                (nucleus.material as THREE.MeshBasicMaterial).opacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.6 * (1 - transitionProgressRef.current);
             }
 
             atomGroupRef.current.children.forEach(child => {
@@ -455,7 +506,10 @@ export function FractalSphere() {
                     const electron = child as THREE.Group;
                     const { userData } = electron;
                     
-                    userData.progress += delta * userData.speed * timeFactor;
+                    const energizedSpeedMultiplier = 4;
+                    const currentSpeed = userData.baseSpeed * (1 + (energizedSpeedMultiplier - 1) * transitionProgressRef.current);
+
+                    userData.progress += delta * currentSpeed * timeFactor;
                     if(userData.progress > 1) userData.progress -= 1;
                     
                     const point2D = userData.curve.getPointAt(userData.progress);
@@ -557,10 +611,10 @@ export function FractalSphere() {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [speed, isPlaying, intensity, nodeCount, setupScene]);
+  }, [speed, isPlaying, intensity, nodeCount, setupScene, updateColors]);
   
   useEffect(() => {
-    updateColors();
+    updateColors(transitionProgressRef.current);
   }, [colorScheme, updateColors]);
 
   const handleReset = useCallback(() => {
@@ -569,6 +623,10 @@ export function FractalSphere() {
     mindStoneGroupRef.current.rotation.set(0, 0, 0);
     mindStoneGroupRef.current.scale.set(1, 1, 1);
     clockRef.current.start();
+    animationStateRef.current = 'stable';
+    transitionProgressRef.current = 0;
+    lastStateChangeTimeRef.current = clockRef.current.getElapsedTime();
+
   }, []);
   
   const handleScreenshot = useCallback(() => {
