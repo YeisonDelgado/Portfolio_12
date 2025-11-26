@@ -253,7 +253,7 @@ export function FractalSphere() {
       transparent: true,
       opacity: 0.3,
       fog: false,
-      linewidth: 2,
+      linewidth: 3,
     });
 
     for (let i = 0; i < 3; i++) {
@@ -268,9 +268,9 @@ export function FractalSphere() {
         const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
         const orbit = new THREE.Line(orbitGeo, orbitMaterial);
         orbit.name = "orbit";
-        orbit.rotation.x = Math.random() * Math.PI;
-        orbit.rotation.y = Math.random() * Math.PI;
-        orbit.rotation.z = Math.random() * Math.PI;
+        orbit.rotation.x = Math.PI / 2;
+        orbit.rotation.y = (Math.PI / 3) * i;
+        orbit.rotation.z = 0;
         atomGroup.add(orbit);
 
         const electronGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.02, 16, 16);
