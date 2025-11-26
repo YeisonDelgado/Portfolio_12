@@ -256,6 +256,11 @@ export function FractalSphere() {
     const radiusStep = 0.005; // Distance between each line
 
     for (let i = 0; i < 3; i++) {
+      const orbitGroup = new THREE.Group(); // Group for each orbit axis
+      const orbitRotation = new THREE.Euler(Math.PI / 2, (Math.PI / 3) * i, Math.random() * Math.PI);
+      orbitGroup.rotation.copy(orbitRotation);
+      atomGroup.add(orbitGroup);
+
       for (let j = 0; j < lineCount; j++) {
         const currentRadius = orbitRadius + (j - Math.floor(lineCount / 2)) * radiusStep;
         const curve = new THREE.EllipseCurve(
@@ -269,10 +274,7 @@ export function FractalSphere() {
         const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
         const orbit = new THREE.Line(orbitGeo, orbitMaterial);
         orbit.name = "orbit";
-        orbit.rotation.x = Math.PI / 2;
-        orbit.rotation.y = (Math.PI / 3) * i;
-        orbit.rotation.z = Math.random() * Math.PI; // Corrected intersection
-        atomGroup.add(orbit);
+        orbitGroup.add(orbit); // Add to the specific orbit group
       }
 
       // Add electron for each of the 3 main orbit axes
@@ -283,8 +285,7 @@ export function FractalSphere() {
       electron.name = "electron";
       electron.userData = {
           curve: electronCurve,
-          // We need a reference rotation object, let's create a dummy one
-          orbit: { rotation: new THREE.Euler(Math.PI / 2, (Math.PI / 3) * i, Math.random() * Math.PI) },
+          orbitRotation: orbitRotation,
           progress: Math.random(),
           speed: (Math.random() * 0.2 + 0.3)
       };
@@ -408,12 +409,14 @@ export function FractalSphere() {
                     userData.progress += delta * userData.speed * timeFactor;
                     if(userData.progress > 1) userData.progress -= 1;
                     
-                    const point = userData.curve.getPointAt(userData.progress);
-                    electron.position.copy(point);
+                    const point2D = userData.curve.getPointAt(userData.progress);
+                    const point = new THREE.Vector3(point2D.x, point2D.y, 0);
                     
                     // Apply the same rotation as the reference orbit
-                    const q = new THREE.Quaternion().setFromEuler(userData.orbit.rotation);
-                    electron.position.applyQuaternion(q);
+                    const q = new THREE.Quaternion().setFromEuler(userData.orbitRotation);
+                    point.applyQuaternion(q);
+
+                    electron.position.copy(point);
                 }
             });
         }
