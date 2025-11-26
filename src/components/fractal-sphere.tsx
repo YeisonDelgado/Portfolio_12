@@ -46,6 +46,7 @@ type Speed = '0.5' | '1' | '2';
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 4;
 const SPARK_COUNT = 10;
+const COMET_LENGTH = 0.5;
 
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -64,7 +65,7 @@ export function FractalSphere() {
   const controlsRef = useRef<OrbitControls>();
   const statsRef = useRef<Stats>();
   const mindStoneGroupRef = useRef<THREE.Group>();
-  const sparksRef = useRef<THREE.Points>();
+  const cometsRef = useRef<THREE.Group>();
   const clockRef = useRef(new THREE.Clock());
 
   const generateGeometry = useCallback(() => {
@@ -146,8 +147,18 @@ export function FractalSphere() {
       line.geometry.attributes.color.needsUpdate = true;
     }
 
-    if (sparksRef.current) {
-      (sparksRef.current.material as THREE.PointsMaterial).color.set(colorFunc(0.5));
+    if (cometsRef.current) {
+        cometsRef.current.children.forEach(child => {
+            const comet = child as THREE.Line;
+            if (comet.material instanceof THREE.LineBasicMaterial) {
+                const colors = [];
+                const color = colorFunc(0.5);
+                colors.push(color.r * 0.2, color.g * 0.2, color.b * 0.2); // Tail color
+                colors.push(color.r, color.g, color.b); // Head color
+                (comet.geometry as THREE.BufferGeometry).setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                ((comet.geometry as THREE.BufferGeometry).attributes.color as THREE.BufferAttribute).needsUpdate = true;
+            }
+        });
     }
 
   }, [colorScheme, colorFunctions]);
@@ -216,31 +227,34 @@ export function FractalSphere() {
     lineSphere.name = "neural-net";
     mindStoneGroup.add(lineSphere);
 
-    // Sparks
-    const sparksGeometry = new THREE.BufferGeometry();
-    const sparksVertices = [];
-    const sparksVelocities = [];
+    // Comets
+    const cometsGroup = new THREE.Group();
+    cometsGroup.name = "comets";
+    cometsRef.current = cometsGroup;
+
     for (let i = 0; i < SPARK_COUNT; i++) {
-        sparksVertices.push(0, 0, 0);
-        sparksVelocities.push({ 
-          vector: new THREE.Vector3().randomDirection(), 
-          speed: Math.random() * 0.5 + 0.5,
-          life: Math.random() * -5 // Stagger their start time
+        const cometGeo = new THREE.BufferGeometry();
+        cometGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
+
+        const cometMat = new THREE.LineBasicMaterial({ 
+            vertexColors: true, 
+            linewidth: 2,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
         });
+
+        const comet = new THREE.Line(cometGeo, cometMat);
+        comet.userData = {
+            direction: new THREE.Vector3().randomDirection(),
+            progress: Math.random(), // Random initial progress
+            speed: (Math.random() * 0.1 + 0.05), // Slower speed
+            delay: Math.random() * 5, // Wait time before firing
+            travelOutward: i < SPARK_COUNT / 2 // Half travel outward, half inward
+        };
+        cometsGroup.add(comet);
     }
-    sparksGeometry.setAttribute('position', new THREE.Float32BufferAttribute(sparksVertices, 3));
-    sparksGeometry.userData.velocities = sparksVelocities;
-    const sparksMaterial = new THREE.PointsMaterial({
-        size: 0.05,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        transparent: true,
-        sizeAttenuation: true,
-    });
-    const sparks = new THREE.Points(sparksGeometry, sparksMaterial);
-    sparks.name = "sparks";
-    mindStoneGroup.add(sparks);
-    sparksRef.current = sparks;
+    mindStoneGroup.add(cometsGroup);
 
     updateColors();
 
@@ -298,36 +312,41 @@ export function FractalSphere() {
             (coreSphere.material as THREE.MeshBasicMaterial).color.setHSL(0.5, 1.0, easedProgress * 0.2 + 0.4);
         }
 
-        // Sparks animation
-        if (sparksRef.current) {
-            const sparksGeo = sparksRef.current.geometry;
-            const positions = sparksGeo.attributes.position.array as Float32Array;
-            const velocities = sparksGeo.userData.velocities;
-
-            for (let i = 0; i < SPARK_COUNT; i++) {
-                const i3 = i * 3;
+        // Comets animation
+        if (cometsRef.current) {
+            cometsRef.current.children.forEach(child => {
+                const comet = child as THREE.Line;
+                const { userData } = comet;
                 
-                velocities[i].life += delta;
-
-                if (velocities[i].life > 0) {
-                  const velocity = velocities[i].vector.clone().multiplyScalar(velocities[i].speed * delta * timeFactor * 1);
-                  positions[i3] += velocity.x;
-                  positions[i3 + 1] += velocity.y;
-                  positions[i3 + 2] += velocity.z;
-
-                  const dist = Math.sqrt(positions[i3]**2 + positions[i3+1]**2 + positions[i3+2]**2);
-                  if (dist > SPHERE_RADIUS) {
-                      // Reset spark
-                      positions[i3] = 0;
-                      positions[i3 + 1] = 0;
-                      positions[i3 + 2] = 0;
-                      velocities[i].vector.randomDirection();
-                      velocities[i].speed = Math.random() * 0.5 + 0.5;
-                      velocities[i].life = Math.random() * -5; // Wait for a random time before firing again
-                  }
+                userData.delay -= delta;
+                if (userData.delay > 0) {
+                    (comet.material as THREE.Material).opacity = 0;
+                    return;
                 }
-            }
-            sparksGeo.attributes.position.needsUpdate = true;
+                
+                (comet.material as THREE.Material).opacity = 1;
+                userData.progress += userData.speed * delta * timeFactor;
+                
+                const headProgress = userData.travelOutward ? userData.progress : 1 - userData.progress;
+                const tailProgress = userData.travelOutward 
+                    ? Math.max(0, headProgress - COMET_LENGTH) 
+                    : Math.min(1, headProgress + COMET_LENGTH);
+
+                const head = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * headProgress);
+                const tail = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * tailProgress);
+
+                const positions = (comet.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
+                tail.toArray(positions, 0);
+                head.toArray(positions, 3);
+                (comet.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+
+                if (userData.progress >= 1.0 + COMET_LENGTH) {
+                    // Reset comet
+                    userData.progress = 0;
+                    userData.direction.randomDirection();
+                    userData.delay = Math.random() * 5 + 2; // Wait for a random time before firing again
+                }
+            });
         }
       }
 
@@ -461,5 +480,3 @@ export function FractalSphere() {
     </>
   );
 }
-
-    
