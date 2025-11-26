@@ -175,11 +175,18 @@ export function FractalSphere() {
             if (child.name === 'orbit' && child instanceof THREE.Line) {
                 (child.material as THREE.LineBasicMaterial).color = new THREE.Color(0x0099ff);
             }
-            if (child.name === 'electron' && child instanceof THREE.Mesh) {
-                const electronMaterial = (child.material as THREE.MeshStandardMaterial);
-                const color = colorFunc(0.5);
-                electronMaterial.color.set(color);
-                electronMaterial.emissive.set(color);
+            if (child.name === 'electron') {
+                child.traverse(obj => {
+                    if (obj instanceof THREE.Mesh && obj.name === 'electron-core') {
+                        const electronMaterial = (obj.material as THREE.MeshStandardMaterial);
+                        const color = colorFunc(0.5);
+                        electronMaterial.color.set(color);
+                        electronMaterial.emissive.set(color);
+                    }
+                    if (obj instanceof THREE.Sprite && obj.name === 'electron-glow') {
+                        (obj.material as THREE.SpriteMaterial).color.set(colorFunc(0.5));
+                    }
+                });
             }
              if (child.name === 'nucleus' && child instanceof THREE.Mesh) {
                 (child.material as THREE.MeshBasicMaterial).color = colorFunc(0.5);
@@ -281,23 +288,42 @@ export function FractalSphere() {
       }
 
       // Add electron for each of the 3 main orbit axes
-      const electronCurve = new THREE.EllipseCurve(0, 0, orbitRadius, orbitRadius, 0, 2 * Math.PI, false, 0);
-      const electronGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.02, 16, 16);
-      const electronMat = new THREE.MeshStandardMaterial({
+      const electronGroup = new THREE.Group();
+      electronGroup.name = "electron";
+      
+      const electronCoreGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.02, 16, 16);
+      const electronCoreMat = new THREE.MeshStandardMaterial({
         color: 0x00ffff,
         emissive: 0x00ffff,
-        emissiveIntensity: 2,
+        emissiveIntensity: 5,
         fog: false,
       });
-      const electron = new THREE.Mesh(electronGeo, electronMat);
-      electron.name = "electron";
-      electron.userData = {
+      const electronCore = new THREE.Mesh(electronCoreGeo, electronCoreMat);
+      electronCore.name = "electron-core";
+      electronGroup.add(electronCore);
+
+      const glowSpriteMap = new THREE.CanvasTexture(createGlowTexture(128));
+      const glowSpriteMaterial = new THREE.SpriteMaterial({
+        map: glowSpriteMap,
+        color: 0x00ffff,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        opacity: 0.8,
+        depthWrite: false
+      });
+      const glowSprite = new THREE.Sprite(glowSpriteMaterial);
+      glowSprite.name = "electron-glow";
+      glowSprite.scale.set(SPHERE_RADIUS * 0.15, SPHERE_RADIUS * 0.15, 1);
+      electronGroup.add(glowSprite);
+
+      const electronCurve = new THREE.EllipseCurve(0, 0, orbitRadius, orbitRadius, 0, 2 * Math.PI, false, 0);
+      electronGroup.userData = {
           curve: electronCurve,
           orbitRotation: orbitRotation,
           progress: Math.random(),
           speed: (Math.random() * 0.2 + 0.3)
       };
-      atomGroup.add(electron);
+      atomGroup.add(electronGroup);
     }
     
 
@@ -345,6 +371,21 @@ export function FractalSphere() {
     updateColors();
 
   }, [generateGeometry, updateColors]);
+  
+  function createGlowTexture(size: number) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d')!;
+    const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.2, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, size, size);
+    return canvas;
+  }
 
   useEffect(() => {
     setupScene();
@@ -411,7 +452,7 @@ export function FractalSphere() {
 
             atomGroupRef.current.children.forEach(child => {
                 if (child.name === 'electron') {
-                    const electron = child as THREE.Mesh;
+                    const electron = child as THREE.Group;
                     const { userData } = electron;
                     
                     userData.progress += delta * userData.speed * timeFactor;
