@@ -517,7 +517,7 @@ export function FractalSphere() {
 
         // Comets animation
         if (cometsRef.current) {
-            const SPIRAL_PHASE_LENGTH = 8; // seconds
+            const SPIRAL_PHASE_LENGTH = 6; // seconds
             const SPIRAL_COMET_COUNT = 600;
             let spiralOpacity = 1;
 
@@ -553,7 +553,7 @@ export function FractalSphere() {
 
 
                     const easedSpeedMultiplier = easeInOutQuint(spiralPhaseProgressRef.current);
-                    userData.progress += userData.speed * delta * timeFactor * 0.2 * (1 + easedSpeedMultiplier * 2);
+                    userData.progress += userData.speed * delta * timeFactor * 0.2 * (1 + easedSpeedMultiplier * 1.5);
 
                     const spiralProgress = (userData.progress % 1.0);
                     const turns = 2.0;
@@ -565,7 +565,7 @@ export function FractalSphere() {
                     head = new THREE.Vector3();
                     head.setFromSphericalCoords(SPHERE_RADIUS * radiusMultiplier, currentPhi, currentTheta);
                     
-                    const tailTheta = currentTheta - COMET_LENGTH * 20;
+                    const tailTheta = currentTheta - COMET_LENGTH * 5;
                     tail = new THREE.Vector3();
                     tail.setFromSphericalCoords(SPHERE_RADIUS * radiusMultiplier, currentPhi, tailTheta);
 
