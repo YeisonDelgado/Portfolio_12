@@ -415,8 +415,12 @@ export function FractalSphere() {
     let completedComets = 0;
     let lastTransitionProgress = -1;
 
-    // Easing function: 0 -> 1
+    // Easing function: 0 -> 1 -> 0
     const easeInOutSine = (x: number): number => -(Math.cos(Math.PI * x) - 1) / 2;
+    const easeInOutQuint = (x: number): number => {
+      return x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
+    };
+
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
@@ -513,7 +517,21 @@ export function FractalSphere() {
 
         // Comets animation
         if (cometsRef.current) {
-            cometsRef.current.children.forEach(child => {
+            const SPIRAL_PHASE_LENGTH = 8; // seconds
+            const SPIRAL_COMET_COUNT = 600;
+            let spiralOpacity = 1;
+
+            if (phaseRef.current === 'spiral') {
+                spiralPhaseProgressRef.current += delta / SPIRAL_PHASE_LENGTH;
+                spiralOpacity = easeInOutSine(spiralPhaseProgressRef.current);
+
+                if (spiralPhaseProgressRef.current > 1) {
+                    spiralPhaseProgressRef.current = 1;
+                }
+            }
+
+
+            cometsRef.current.children.forEach((child, index) => {
                 const comet = child as THREE.Line;
                 const { userData } = comet;
                 
@@ -523,13 +541,18 @@ export function FractalSphere() {
                     return;
                 }
                 
-                (comet.material as THREE.Material).opacity = 1;
-
                 let head, tail;
 
                 if (phaseRef.current === 'spiral') {
-                    const easedSpeedMultiplier = easeInOutSine(spiralPhaseProgressRef.current);
+                    // Fade out comets that are not part of the spiral
+                    if (index >= SPIRAL_COMET_COUNT) {
+                        (comet.material as THREE.Material).opacity = 1 - spiralOpacity;
+                        return; // Don't animate these comets further
+                    }
+                     (comet.material as THREE.Material).opacity = spiralOpacity;
 
+
+                    const easedSpeedMultiplier = easeInOutQuint(spiralPhaseProgressRef.current);
                     userData.progress += userData.speed * delta * timeFactor * 0.2 * (1 + easedSpeedMultiplier * 2);
 
                     const spiralProgress = (userData.progress % 1.0);
@@ -550,6 +573,7 @@ export function FractalSphere() {
                     tail.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), spiralAxisRef.current));
 
                 } else {
+                    (comet.material as THREE.Material).opacity = 1;
                     let effectiveSpeed = userData.speed;
                     if (phaseRef.current === 'wave') {
                         const dot = userData.direction.dot(waveAxisRef.current);
@@ -570,6 +594,8 @@ export function FractalSphere() {
                     head = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * headProgress);
                     tail = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * tailProgress);
                 }
+
+                if (!head || !tail) return;
 
                 const positions = (comet.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
                 tail.toArray(positions, 0);
@@ -594,15 +620,6 @@ export function FractalSphere() {
             });
 
              // Phase transition logic
-            const SPIRAL_PHASE_LENGTH = 8; // seconds
-            if (phaseRef.current === 'spiral') {
-                spiralPhaseProgressRef.current += delta / SPIRAL_PHASE_LENGTH;
-                if (spiralPhaseProgressRef.current > 1) {
-                    spiralPhaseProgressRef.current = 1;
-                }
-            }
-
-
             if (completedComets >= SPARK_COUNT) {
                 completedComets = 0;
                 iterationCycleRef.current++;
