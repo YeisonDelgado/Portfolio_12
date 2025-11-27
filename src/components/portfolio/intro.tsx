@@ -80,7 +80,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
                  />
                </span>
              </Typist>
-             <span className="animate-blink">|</span>
+             <span className="animate-blink text-3xl md:text-4xl">|</span>
            </h1>
         )}
         <p className="mt-4 text-lg md:text-xl text-muted-foreground">
