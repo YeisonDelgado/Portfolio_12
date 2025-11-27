@@ -15,7 +15,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen w-full bg-background text-foreground">
       <Header />
       <main className="flex-grow">
-        <div className="relative w-full h-[50vh]">
+        <div className="relative w-full h-[40vh]">
           <FractalSphereLoader isEnergized={isEnergized} />
         </div>
         <Intro isEnergized={isEnergized} setIsEnergized={setIsEnergized} />
