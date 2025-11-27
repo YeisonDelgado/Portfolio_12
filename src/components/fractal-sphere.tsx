@@ -207,7 +207,7 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
     controls.dampingFactor = 0.05;
     controls.minDistance = 2.5;
     controls.maxDistance = 15;
-    controls.enableZoom = true;
+    controls.enableZoom = false;
     controlsRef.current = controls;
 
     const ambientLight = new THREE.AmbientLight(0x6600ff, 0.5);
@@ -634,12 +634,6 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
       <div 
         ref={mountRef} 
         className="absolute inset-0 z-0 w-full h-full"
-        onMouseEnter={() => {
-            if (controlsRef.current) controlsRef.current.enableZoom = true;
-        }}
-        onMouseLeave={() => {
-            if (controlsRef.current) controlsRef.current.enableZoom = false;
-        }}
       />
     </>
   );
