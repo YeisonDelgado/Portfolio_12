@@ -46,7 +46,7 @@ export function FractalSphere() {
   const speed = '1';
   const colorScheme: ColorScheme = 'Quantum Purple';
   const intensity = 33;
-  const nodeCount = 100;
+  const nodeCount = 110;
 
 
   // Refs for Three.js objects
@@ -517,7 +517,7 @@ export function FractalSphere() {
 
         // Comets animation
         if (cometsRef.current) {
-            const SPIRAL_PHASE_LENGTH = 6; // seconds
+            const SPIRAL_PHASE_LENGTH = 4; // seconds
             const SPIRAL_COMET_COUNT = 600;
             let spiralOpacity = 1;
 
