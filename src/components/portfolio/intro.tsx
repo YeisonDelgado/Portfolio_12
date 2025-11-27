@@ -42,7 +42,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
   }, []);
 
   return (
-    <section id="intro" className="relative flex items-center justify-center text-center pt-20 md:pt-32 pb-32 md:pb-48">
+    <section id="intro" className="relative flex items-center justify-center text-center pt-32 md:pt-48 pb-32 md:pb-48">
       <div className="relative z-10 max-w-3xl mx-auto px-4">
         {typistKey > 0 && (
            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
