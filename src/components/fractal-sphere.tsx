@@ -11,7 +11,7 @@ type ColorScheme =
   | 'Quantum Purple'
   | 'Sunset';
 
-const SPHERE_RADIUS = 2;
+const SPHERE_RADIUS = 1.5;
 const K_NEIGHBORS = 3; 
 const SPARK_COUNT = 800;
 const COMET_LENGTH = 0.01;
@@ -638,3 +638,5 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
     </>
   );
 }
+
+    
