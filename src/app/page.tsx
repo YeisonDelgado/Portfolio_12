@@ -6,6 +6,7 @@ import { Experience } from '@/components/portfolio/experience';
 import { FractalSphereLoader } from '@/components/fractal-sphere-loader';
 import { Header } from '@/components/portfolio/header';
 import { Projects } from '@/components/portfolio/projects';
+import { About } from '@/components/portfolio/about';
 
 export default function Home() {
   const [isEnergized, setIsEnergized] = useState(false);
@@ -19,6 +20,7 @@ export default function Home() {
         </div>
         <Intro isEnergized={isEnergized} setIsEnergized={setIsEnergized} />
         <div className="container mx-auto px-4 md:px-6">
+          <About />
           <Experience />
           <Projects />
         </div>
