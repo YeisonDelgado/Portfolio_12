@@ -415,7 +415,7 @@ export function FractalSphere() {
     let completedComets = 0;
     let lastTransitionProgress = -1;
 
-    // Easing function: 0 -> 1 -> 0
+    // Easing function: 0 -> 1
     const easeInOutSine = (x: number): number => -(Math.cos(Math.PI * x) - 1) / 2;
 
     const animate = () => {
@@ -435,13 +435,14 @@ export function FractalSphere() {
         transitionProgressRef.current = Math.max(0, transitionProgressRef.current - TRANSITION_SPEED);
       }
       
-      if (Math.abs(transitionProgressRef.current - lastTransitionProgress) > 0.01) {
+      const transitionProgress = transitionProgressRef.current;
+      if (Math.abs(transitionProgress - lastTransitionProgress) > 0.01) {
           needsColorUpdate = true;
-          lastTransitionProgress = transitionProgressRef.current;
+          lastTransitionProgress = transitionProgress;
       }
   
       if (needsColorUpdate) {
-        updateColors(transitionProgressRef.current);
+        updateColors(transitionProgress);
       }
       
 
@@ -483,29 +484,29 @@ export function FractalSphere() {
             const nucleus = atomGroupRef.current.getObjectByName('nucleus') as THREE.Mesh;
             if (nucleus) {
                 const baseOpacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.6;
-                (nucleus.material as THREE.MeshBasicMaterial).opacity = baseOpacity * (1 - transitionProgressRef.current);
+                (nucleus.material as THREE.MeshBasicMaterial).opacity = baseOpacity * (1 - transitionProgress);
             }
 
             atomGroupRef.current.children.forEach(child => {
-                if (child.name === 'electron') {
-                    const electron = child as THREE.Group;
-                    const { userData } = electron;
-                    
-                    const energizedSpeedMultiplier = 4;
-                    const currentSpeed = userData.baseSpeed * (1 + (energizedSpeedMultiplier - 1) * transitionProgressRef.current);
+              if (child.name === 'electron') {
+                const electron = child as THREE.Group;
+                const { userData } = electron;
+                if (electron.visible) {
+                  const energizedSpeedMultiplier = 4;
+                  const currentSpeed = userData.baseSpeed * (1 + (energizedSpeedMultiplier - 1) * transitionProgress);
 
-                    userData.progress += delta * currentSpeed * timeFactor;
-                    if(userData.progress > 1) userData.progress -= 1;
-                    
-                    const point2D = userData.curve.getPointAt(userData.progress);
-                    const point = new THREE.Vector3(point2D.x, point2D.y, 0);
-                    
-                    // Apply the same rotation as the reference orbit
-                    const q = new THREE.Quaternion().setFromEuler(userData.orbitRotation);
-                    point.applyQuaternion(q);
+                  userData.progress += delta * currentSpeed * timeFactor;
+                  if(userData.progress > 1) userData.progress -= 1;
+                  
+                  const point2D = userData.curve.getPointAt(userData.progress);
+                  const point = new THREE.Vector3(point2D.x, point2D.y, 0);
+                  
+                  const q = new THREE.Quaternion().setFromEuler(userData.orbitRotation);
+                  point.applyQuaternion(q);
 
-                    electron.position.copy(point);
+                  electron.position.copy(point);
                 }
+              }
             });
         }
 
@@ -527,10 +528,9 @@ export function FractalSphere() {
                 let head, tail;
 
                 if (phaseRef.current === 'spiral') {
-                    // Use an easing function for the speed multiplier
                     const easedSpeedMultiplier = easeInOutSine(spiralPhaseProgressRef.current);
 
-                    userData.progress += userData.speed * delta * timeFactor * 0.5 * (1 + easedSpeedMultiplier * 2);
+                    userData.progress += userData.speed * delta * timeFactor * 0.2 * (1 + easedSpeedMultiplier * 2);
 
                     const spiralProgress = (userData.progress % 1.0);
                     const turns = 4.0;
@@ -594,7 +594,7 @@ export function FractalSphere() {
             });
 
              // Phase transition logic
-            const SPIRAL_PHASE_LENGTH = 15; // seconds
+            const SPIRAL_PHASE_LENGTH = 20; // seconds
             if (phaseRef.current === 'spiral') {
                 spiralPhaseProgressRef.current += delta / SPIRAL_PHASE_LENGTH;
                 if (spiralPhaseProgressRef.current > 1) {
@@ -666,5 +666,3 @@ export function FractalSphere() {
     </>
   );
 }
-
-    
