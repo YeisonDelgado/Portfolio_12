@@ -42,8 +42,8 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
   }, []);
 
   return (
-    <section id="intro" className="relative flex items-center justify-center text-center pt-32 md:pt-48 pb-32 md:pb-48">
-      <div className="relative z-10 max-w-3xl mx-auto px-4">
+    <section id="intro" className="container mx-auto px-4 md:px-6 flex items-center justify-center text-center pt-32 md:pt-48 pb-32 md:pb-48">
+      <div className="relative z-10 max-w-3xl">
         {typistKey > 0 && (
            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
              <Typist key={typistKey} typingDelay={120}>
