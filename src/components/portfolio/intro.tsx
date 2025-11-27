@@ -47,7 +47,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
         {typistKey > 0 && (
            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
              <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor'>|</span>}>
-               {"hi, "}
+               <span>{"hi, "}</span>
                <span className="text-primary">{"yeison"}</span>
                <span>
                  {" here."}
@@ -81,6 +81,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
                     />
                  </span>
                </span>
+               {' '}
              </Typist>
            </h1>
         )}
