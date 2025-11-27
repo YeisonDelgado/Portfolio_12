@@ -21,7 +21,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
   }, []);
 
   const handleEnergizeClick = () => {
-    setIsEnergized(!isEnergized);
+    setIsEnergized((prev) => !prev);
     setShowButton(true);
 
     if (timeoutRef.current) {
@@ -52,24 +52,22 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
               <span className="relative">
                 {" here."}
                 <div className="absolute inset-0 flex items-center justify-center -right-4">
-                  <Button
-                    variant={isEnergized ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={handleEnergizeClick}
-                    className={cn(
-                      'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full cursor-pointer',
-                      showButton ? 'opacity-100' : 'opacity-0'
-                    )}
-                    style={{
-                      // Position it roughly behind "here"
-                      left: '100%',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      marginLeft: '0.5rem',
-                    }}
-                  >
-                    <Zap className="h-4 w-4" />
-                  </Button>
+                   <span
+                      className={cn(
+                        'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full',
+                        'bg-primary/20 text-primary',
+                        showButton ? 'opacity-100' : 'opacity-0'
+                      )}
+                       style={{
+                        left: '100%',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        marginLeft: '0.5rem',
+                        pointerEvents: 'none'
+                      }}
+                   >
+                     <Zap className="h-4 w-4" />
+                   </span>
                    {/* This is the invisible clickable area */}
                    <div
                     className="absolute cursor-pointer"
