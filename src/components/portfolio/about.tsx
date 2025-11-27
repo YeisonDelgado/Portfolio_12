@@ -52,11 +52,11 @@ export function About() {
         </div>
         <div className="relative w-full aspect-square rounded-lg overflow-hidden group">
             <Image
-                src="https://picsum.photos/seed/goth/600/600"
+                src="https://storage.googleapis.com/aai-sit-studio-public-pro-1a39b36/4101e4a3-7647-49f3-8f0a-48d51a66e6c7"
                 alt="Yeison Delgado"
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
-                data-ai-hint="gothic man shirtless"
+                
             />
         </div>
       </div>
