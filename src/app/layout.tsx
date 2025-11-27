@@ -49,6 +49,23 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
+        <style>
+          {`
+            .Typist .Cursor {
+              display: inline-block;
+              color: hsl(var(--primary));
+            }
+            .Typist .Cursor--blinking {
+              opacity: 1;
+              animation: blink 1s linear infinite;
+            }
+            @keyframes blink {
+              0% { opacity: 1; }
+              50% { opacity: 0; }
+              100% { opacity: 1; }
+            }
+          `}
+        </style>
       </head>
       <body className="font-body antialiased">
         {children}
