@@ -5,6 +5,7 @@ import { Intro } from '@/components/portfolio/intro';
 import { Experience } from '@/components/portfolio/experience';
 import { FractalSphereLoader } from '@/components/fractal-sphere-loader';
 import { Header } from '@/components/portfolio/header';
+import { Projects } from '@/components/portfolio/projects';
 
 export default function Home() {
   const [isEnergized, setIsEnergized] = useState(false);
@@ -19,6 +20,7 @@ export default function Home() {
         <Intro isEnergized={isEnergized} setIsEnergized={setIsEnergized} />
         <div className="container mx-auto px-4 md:px-6">
           <Experience />
+          <Projects />
         </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground">

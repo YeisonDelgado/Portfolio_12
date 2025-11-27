@@ -8,6 +8,7 @@ import { Button } from '../ui/button';
 const navLinks = [
   { href: '#intro', label: 'Home' },
   { href: '#experience', label: 'Experience' },
+  { href: '#projects', label: 'Projects' },
 ];
 
 const socialLinks = [
