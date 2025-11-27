@@ -207,7 +207,7 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
     controls.dampingFactor = 0.05;
     controls.minDistance = 2.5;
     controls.maxDistance = 15;
-    controls.enableZoom = false; // Initially disable zoom
+    controls.enableZoom = true;
     controlsRef.current = controls;
 
     const ambientLight = new THREE.AmbientLight(0x6600ff, 0.5);
