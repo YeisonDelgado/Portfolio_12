@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import Stats from 'three/examples/jsm/libs/stats.module.js';
 
 import { Button } from '@/components/ui/button';
 
@@ -55,7 +54,6 @@ export function FractalSphere() {
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
   const controlsRef = useRef<OrbitControls>();
-  const statsRef = useRef<Stats>();
   const mindStoneGroupRef = useRef<THREE.Group>();
   const cometsRef = useRef<THREE.Group>();
   const atomGroupRef = useRef<THREE.Group>();
@@ -210,12 +208,6 @@ export function FractalSphere() {
       mountRef.current?.removeChild(rendererRef.current.domElement);
       rendererRef.current.dispose();
     }
-    if (statsRef.current) {
-        const statsContainer = document.getElementById('stats-container');
-        if (statsContainer && statsRef.current.dom.parentElement) {
-            statsContainer.removeChild(statsRef.current.dom);
-        }
-    }
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
@@ -234,16 +226,6 @@ export function FractalSphere() {
     controls.minDistance = 2.5;
     controls.maxDistance = 15;
     controlsRef.current = controls;
-
-    const stats = new Stats();
-    const statsContainer = document.getElementById('stats-container');
-    if (statsContainer) {
-      stats.dom.style.position = 'absolute';
-      stats.dom.style.top = '0px';
-      stats.dom.style.left = '0px';
-      statsContainer.appendChild(stats.dom);
-    }
-    statsRef.current = stats;
 
     const ambientLight = new THREE.AmbientLight(0x6600ff, 0.5);
     scene.add(ambientLight);
@@ -649,7 +631,6 @@ export function FractalSphere() {
       }
 
       controlsRef.current?.update();
-      statsRef.current?.update();
       rendererRef.current.render(sceneRef.current, cameraRef.current);
     };
 
@@ -668,7 +649,6 @@ export function FractalSphere() {
   return (
     <>
       <div ref={mountRef} className="absolute inset-0 z-0 w-full h-full" />
-      <div id="stats-container" className="absolute top-0 left-0 z-20" />
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
         <Button
