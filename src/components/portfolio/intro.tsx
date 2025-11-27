@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Mail } from 'lucide-react';
 import Typist from 'react-typist-component';
 import { Button } from '@/components/ui/button';
+import { FractalSphereLoader } from '../fractal-sphere-loader';
 
 export function Intro() {
   // Use state to re-trigger typist animation on client
@@ -13,8 +14,13 @@ export function Intro() {
   }, []);
 
   return (
-    <section id="intro" className="py-16 md:py-24 text-center">
-      <div className="max-w-3xl mx-auto">
+    <section id="intro" className="relative h-[80vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden">
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#000000] to-[#111111]">
+        <FractalSphereLoader />
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
+
+      <div className="relative z-10 max-w-3xl mx-auto px-4">
         {typistKey > 0 && (
           <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor'>|</span>}>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
