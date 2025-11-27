@@ -533,7 +533,7 @@ export function FractalSphere() {
                     userData.progress += userData.speed * delta * timeFactor * 0.2 * (1 + easedSpeedMultiplier * 2);
 
                     const spiralProgress = (userData.progress % 1.0);
-                    const turns = 4.0;
+                    const turns = 2.0;
                     const currentTheta = userData.theta + spiralProgress * Math.PI * 2 * turns;
                     const currentPhi = userData.phi;
                      
@@ -594,7 +594,7 @@ export function FractalSphere() {
             });
 
              // Phase transition logic
-            const SPIRAL_PHASE_LENGTH = 20; // seconds
+            const SPIRAL_PHASE_LENGTH = 8; // seconds
             if (phaseRef.current === 'spiral') {
                 spiralPhaseProgressRef.current += delta / SPIRAL_PHASE_LENGTH;
                 if (spiralPhaseProgressRef.current > 1) {
