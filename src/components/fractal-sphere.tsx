@@ -405,6 +405,8 @@ export function FractalSphere() {
     
     let animationFrameId: number;
     let completedComets = 0;
+    let lastTransitionProgress = -1;
+
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
@@ -415,12 +417,24 @@ export function FractalSphere() {
       const timeFactor = parseFloat(speed);
       
       const TRANSITION_SPEED = delta * 2.0;
+      let needsColorUpdate = false;
+      
       if (isEnergized) {
         transitionProgressRef.current = Math.min(1, transitionProgressRef.current + TRANSITION_SPEED);
       } else {
         transitionProgressRef.current = Math.max(0, transitionProgressRef.current - TRANSITION_SPEED);
       }
-      updateColors(transitionProgressRef.current);
+      
+      // Check if the transition progress has changed meaningfully
+      if (Math.abs(transitionProgressRef.current - lastTransitionProgress) > 0.01) {
+          needsColorUpdate = true;
+          lastTransitionProgress = transitionProgressRef.current;
+      }
+  
+      if (needsColorUpdate) {
+        updateColors(transitionProgressRef.current);
+      }
+      
 
       if (isPlaying) {
         mindStoneGroupRef.current.rotation.y += 0.002 * timeFactor;
