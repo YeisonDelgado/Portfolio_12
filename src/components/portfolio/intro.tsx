@@ -12,7 +12,6 @@ type IntroProps = {
 };
 
 export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
-  // Use state to re-trigger typist animation on client
   const [typistKey, setTypistKey] = useState(0);
   const [showButton, setShowButton] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);

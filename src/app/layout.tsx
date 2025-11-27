@@ -53,7 +53,6 @@ export default function RootLayout({
           {`
             .Typist .Cursor {
               display: inline-block;
-              color: hsl(var(--primary));
             }
             .Typist .Cursor--blinking {
               opacity: 1;
