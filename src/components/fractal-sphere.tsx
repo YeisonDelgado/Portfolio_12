@@ -30,7 +30,7 @@ type ColorScheme =
 
 const SPHERE_RADIUS = 2;
 const K_NEIGHBORS = 3; 
-const SPARK_COUNT = 700;
+const SPARK_COUNT = 800;
 const COMET_LENGTH = 0.01;
 
 type CometPhase = 'random' | 'wave' | 'spiral';
@@ -46,7 +46,7 @@ export function FractalSphere() {
   const speed = '1';
   const colorScheme: ColorScheme = 'Quantum Purple';
   const intensity = 33;
-  const nodeCount = 80;
+  const nodeCount = 100;
 
 
   // Refs for Three.js objects
@@ -69,6 +69,9 @@ export function FractalSphere() {
 
   // State for energizing cycle
   const transitionProgressRef = useRef(0);
+
+  // New ref for spiral phase timing
+  const spiralPhaseProgressRef = useRef(0);
 
 
   const generateGeometry = useCallback(() => {
@@ -412,6 +415,8 @@ export function FractalSphere() {
     let completedComets = 0;
     let lastTransitionProgress = -1;
 
+    // Easing function: 0 -> 1 -> 0
+    const easeInOutSine = (x: number): number => -(Math.cos(Math.PI * x) - 1) / 2;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
@@ -522,7 +527,10 @@ export function FractalSphere() {
                 let head, tail;
 
                 if (phaseRef.current === 'spiral') {
-                    userData.progress += userData.speed * delta * timeFactor * 0.5;
+                    // Use an easing function for the speed multiplier
+                    const easedSpeedMultiplier = easeInOutSine(spiralPhaseProgressRef.current);
+
+                    userData.progress += userData.speed * delta * timeFactor * 0.5 * (1 + easedSpeedMultiplier * 2);
 
                     const spiralProgress = (userData.progress % 1.0);
                     const turns = 4.0;
@@ -586,6 +594,15 @@ export function FractalSphere() {
             });
 
              // Phase transition logic
+            const SPIRAL_PHASE_LENGTH = 15; // seconds
+            if (phaseRef.current === 'spiral') {
+                spiralPhaseProgressRef.current += delta / SPIRAL_PHASE_LENGTH;
+                if (spiralPhaseProgressRef.current > 1) {
+                    spiralPhaseProgressRef.current = 1;
+                }
+            }
+
+
             if (completedComets >= SPARK_COUNT) {
                 completedComets = 0;
                 iterationCycleRef.current++;
@@ -596,9 +613,12 @@ export function FractalSphere() {
                         waveAxisRef.current.randomDirection();
                     }
                 } else if (iterationCycleRef.current > 5 && iterationCycleRef.current <= 10) {
-                    phaseRef.current = 'spiral';
-                     if (iterationCycleRef.current === 6) {
-                        spiralAxisRef.current.randomDirection();
+                    if (phaseRef.current !== 'spiral') {
+                       phaseRef.current = 'spiral';
+                       spiralPhaseProgressRef.current = 0; // Reset spiral timer
+                       if (iterationCycleRef.current === 6) {
+                          spiralAxisRef.current.randomDirection();
+                       }
                     }
                 } else if (iterationCycleRef.current > 10) {
                     phaseRef.current = 'random';
@@ -646,3 +666,5 @@ export function FractalSphere() {
     </>
   );
 }
+
+    
