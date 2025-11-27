@@ -684,5 +684,3 @@ export function FractalSphere() {
     </>
   );
 }
-
-    
