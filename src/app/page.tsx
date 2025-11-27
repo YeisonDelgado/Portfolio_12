@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { Intro } from '@/components/portfolio/intro';
 import { Experience } from '@/components/portfolio/experience';
 import { FractalSphereLoader } from '@/components/fractal-sphere-loader';
+import { Header } from '@/components/portfolio/header';
 
 export default function Home() {
   const [isEnergized, setIsEnergized] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-background text-foreground">
+      <Header />
       <main className="flex-grow">
         <div className="relative w-full h-[50vh]">
           <FractalSphereLoader isEnergized={isEnergized} />
