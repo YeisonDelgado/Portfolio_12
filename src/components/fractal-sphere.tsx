@@ -41,12 +41,13 @@ export function FractalSphere() {
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [isEnergized, setIsEnergized] = useState(false);
+  const [nodeCount, setNodeCount] = useState(110);
+
 
   // Static parameters
   const speed = '1';
   const colorScheme: ColorScheme = 'Quantum Purple';
   const intensity = 33;
-  const nodeCount = 110;
 
 
   // Refs for Three.js objects
@@ -683,3 +684,5 @@ export function FractalSphere() {
     </>
   );
 }
+
+    
