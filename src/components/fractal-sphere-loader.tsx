@@ -15,6 +15,6 @@ const FractalSphere = dynamic(
   }
 );
 
-export function FractalSphereLoader() {
-  return <FractalSphere />;
+export function FractalSphereLoader({ isEnergized }: { isEnergized: boolean }) {
+  return <FractalSphere isEnergized={isEnergized} />;
 }

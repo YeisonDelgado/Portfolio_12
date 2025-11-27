@@ -1,15 +1,45 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { Mail } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Mail, Zap } from 'lucide-react';
 import Typist from 'react-typist-component';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-export function Intro() {
+type IntroProps = {
+  isEnergized: boolean;
+  setIsEnergized: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
   // Use state to re-trigger typist animation on client
   const [typistKey, setTypistKey] = useState(0);
+  const [showButton, setShowButton] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     setTypistKey(1);
+  }, []);
+
+  const handleEnergizeClick = () => {
+    setIsEnergized(!isEnergized);
+    setShowButton(true);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setShowButton(false);
+    }, 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -20,7 +50,41 @@ export function Intro() {
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
               {"hi, "}
               <span className="text-primary">{"gazi"}</span>
-              {" here."}
+              <span className="relative">
+                {" here."}
+                <div className="absolute inset-0 flex items-center justify-center -right-4">
+                  <Button
+                    variant={isEnergized ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={handleEnergizeClick}
+                    className={cn(
+                      'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full cursor-pointer',
+                      showButton ? 'opacity-100' : 'opacity-0'
+                    )}
+                    style={{
+                      // Position it roughly behind "here"
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: '0.5rem',
+                    }}
+                  >
+                    <Zap className="h-4 w-4" />
+                  </Button>
+                   {/* This is the invisible clickable area */}
+                   <div
+                    className="absolute cursor-pointer"
+                    onClick={handleEnergizeClick}
+                    style={{
+                      width: '80px', // Adjust size to cover "here." and some padding
+                      height: '60px',
+                      top: '50%',
+                      left: '70%',
+                      transform: 'translateY(-50%)',
+                    }}
+                   />
+                </div>
+              </span>
             </h1>
           </Typist>
         )}

@@ -4,22 +4,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-import { Button } from '@/components/ui/button';
-
-import { useToast } from '@/hooks/use-toast';
-import {
-  Play,
-  Pause,
-  RotateCcw,
-  Camera,
-  Palette,
-  Atom,
-  Zap,
-  Network,
-  Maximize,
-} from 'lucide-react';
-import { Separator } from './ui/separator';
-
 type ColorScheme =
   | 'Original Blue'
   | 'Plasma'
@@ -34,12 +18,10 @@ const COMET_LENGTH = 0.01;
 
 type CometPhase = 'random' | 'wave' | 'spiral';
 
-export function FractalSphere() {
+export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-
+  
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isEnergized, setIsEnergized] = useState(false);
   const [nodeCount, setNodeCount] = useState(110);
 
 
@@ -649,18 +631,6 @@ export function FractalSphere() {
   return (
     <>
       <div ref={mountRef} className="absolute inset-0 z-0 w-full h-full" />
-
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-        <Button
-          variant={isEnergized ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setIsEnergized(!isEnergized)}
-          className="bg-card/60 backdrop-blur-sm border-primary/20 shadow-lg"
-        >
-          <Zap className="h-4 w-4 mr-2" />
-          {isEnergized ? 'Stabilize' : 'Energize'}
-        </Button>
-      </div>
     </>
   );
 }
