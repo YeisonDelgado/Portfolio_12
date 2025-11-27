@@ -46,7 +46,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
       <div className="relative z-10 max-w-3xl mx-auto px-4">
         {typistKey > 0 && (
            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-             <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor'>|</span>}>
+             <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor' style={{ fontSize: '0.8em' }}>|</span>}>
                <span>{"hi, "}</span>
                <span className="text-primary">{"yeison"}</span>
                <span className="relative">
