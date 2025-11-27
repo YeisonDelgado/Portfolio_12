@@ -45,45 +45,44 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
     <section id="intro" className="relative flex items-center justify-center text-center pt-32 md:pt-48 pb-32 md:pb-48">
       <div className="relative z-10 max-w-3xl mx-auto px-4">
         {typistKey > 0 && (
-          <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor'>|</span>}>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              {"hi, "}
-              <span className="text-primary">{"yeison"}</span>
-              <span className="relative">
-                {" here."}
-                <div className="absolute inset-0 flex items-center justify-center -right-4">
-                   <span
-                      className={cn(
-                        'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full',
-                        'bg-primary/20 text-primary',
-                        showButton ? 'opacity-100' : 'opacity-0'
-                      )}
-                       style={{
-                        left: '100%',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        marginLeft: '0.5rem',
-                        pointerEvents: 'none'
-                      }}
-                   >
-                     <Zap className="h-4 w-4" />
-                   </span>
-                   {/* This is the invisible clickable area */}
-                   <div
-                    className="absolute cursor-pointer"
-                    onClick={handleEnergizeClick}
-                    style={{
-                      width: '80px', // Adjust size to cover "here." and some padding
-                      height: '60px',
-                      top: '50%',
-                      left: '70%',
-                      transform: 'translateY(-50%)',
-                    }}
-                   />
-                </div>
-              </span>
-            </h1>
-          </Typist>
+           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+             <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor'>|</span>}>
+               {"hi, "}
+               <span className="text-primary">{"yeison"}</span>
+               <span>
+                 {" here."}
+                 <span className="absolute inset-0">
+                    <span
+                       className={cn(
+                         'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full',
+                         'bg-primary/20 text-primary',
+                         showButton ? 'opacity-100' : 'opacity-0'
+                       )}
+                        style={{
+                         left: '100%',
+                         top: '50%',
+                         transform: 'translateY(-50%)',
+                         marginLeft: '0.5rem',
+                         pointerEvents: 'none'
+                       }}
+                    >
+                      <Zap className="h-4 w-4" />
+                    </span>
+                    <div
+                     className="absolute cursor-pointer"
+                     onClick={handleEnergizeClick}
+                     style={{
+                       width: '80px',
+                       height: '60px',
+                       top: '50%',
+                       left: '70%',
+                       transform: 'translateY(-50%)',
+                     }}
+                    />
+                 </span>
+               </span>
+             </Typist>
+           </h1>
         )}
         <p className="mt-4 text-lg md:text-xl text-muted-foreground">
           I create stuff sometimes.
