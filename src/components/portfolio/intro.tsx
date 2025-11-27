@@ -13,7 +13,7 @@ export function Intro() {
   }, []);
 
   return (
-    <section id="intro" className="relative flex items-center justify-center text-center pt-16 md:pt-24 pb-32 md:pb-48">
+    <section id="intro" className="relative flex items-center justify-center text-center pt-24 md:pt-32 pb-32 md:pb-48">
       <div className="relative z-10 max-w-3xl mx-auto px-4">
         {typistKey > 0 && (
           <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor'>|</span>}>
