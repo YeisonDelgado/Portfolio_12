@@ -29,11 +29,11 @@ type ColorScheme =
   | 'Sunset';
 
 const SPHERE_RADIUS = 2;
-const K_NEIGHBORS = 3; // Reduced from 4
-const SPARK_COUNT = 200; // Reduced from 1000
+const K_NEIGHBORS = 3; 
+const SPARK_COUNT = 700;
 const COMET_LENGTH = 0.01;
 
-type CometPhase = 'random' | 'wave';
+type CometPhase = 'random' | 'wave' | 'spiral';
 
 export function FractalSphere() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -46,7 +46,7 @@ export function FractalSphere() {
   const speed = '1';
   const colorScheme: ColorScheme = 'Quantum Purple';
   const intensity = 33;
-  const nodeCount = 50; // Reduced from 100
+  const nodeCount = 80;
 
 
   // Refs for Three.js objects
@@ -64,6 +64,8 @@ export function FractalSphere() {
   const iterationCycleRef = useRef(0);
   const phaseRef = useRef<CometPhase>('random');
   const waveAxisRef = useRef(new THREE.Vector3().randomDirection());
+  const spiralAxisRef = useRef(new THREE.Vector3(0, 1, 0).randomDirection());
+
 
   // State for energizing cycle
   const transitionProgressRef = useRef(0);
@@ -367,7 +369,10 @@ export function FractalSphere() {
             progress: Math.random(),
             speed: (Math.random() * 0.2 + 0.25),
             delay: Math.random() * 5,
-            travelOutward: i < SPARK_COUNT / 2 
+            travelOutward: i < SPARK_COUNT / 2,
+            // For spiral
+            phi: Math.acos(1 - 2 * Math.random()), // Latitude
+            theta: Math.random() * 2 * Math.PI, // Longitude
         };
         cometsGroup.add(comet);
     }
@@ -425,7 +430,6 @@ export function FractalSphere() {
         transitionProgressRef.current = Math.max(0, transitionProgressRef.current - TRANSITION_SPEED);
       }
       
-      // Check if the transition progress has changed meaningfully
       if (Math.abs(transitionProgressRef.current - lastTransitionProgress) > 0.01) {
           needsColorUpdate = true;
           lastTransitionProgress = transitionProgressRef.current;
@@ -515,27 +519,49 @@ export function FractalSphere() {
                 
                 (comet.material as THREE.Material).opacity = 1;
 
-                let effectiveSpeed = userData.speed;
-                if (phaseRef.current === 'wave') {
-                    const dot = userData.direction.dot(waveAxisRef.current); // -1 to 1
-                    // Make comets travel faster as part of the wave front
-                    effectiveSpeed = userData.speed * 1.5;
-                    // Delay comets based on their position relative to the wave axis
-                    const waveDelay = (1 - dot) * 2.5; // Comets opposite to axis are delayed most
-                    userData.progress += (effectiveSpeed * delta * timeFactor) - (waveDelay * 0.001);
+                let head, tail;
+
+                if (phaseRef.current === 'spiral') {
+                    userData.progress += userData.speed * delta * timeFactor * 0.5;
+
+                    const spiralProgress = (userData.progress % 1.0);
+                    const turns = 4.0;
+                    const currentTheta = userData.theta + spiralProgress * Math.PI * 2 * turns;
+                    const currentPhi = userData.phi;
+                     
+                    const radiusMultiplier = Math.sin(spiralProgress * Math.PI); // In and out pulse
+
+                    head = new THREE.Vector3();
+                    head.setFromSphericalCoords(SPHERE_RADIUS * radiusMultiplier, currentPhi, currentTheta);
+                    
+                    const tailTheta = currentTheta - COMET_LENGTH * 20;
+                    tail = new THREE.Vector3();
+                    tail.setFromSphericalCoords(SPHERE_RADIUS * radiusMultiplier, currentPhi, tailTheta);
+
+                    head.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), spiralAxisRef.current));
+                    tail.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), spiralAxisRef.current));
+
                 } else {
-                    userData.progress += effectiveSpeed * delta * timeFactor;
+                    let effectiveSpeed = userData.speed;
+                    if (phaseRef.current === 'wave') {
+                        const dot = userData.direction.dot(waveAxisRef.current);
+                        effectiveSpeed = userData.speed * 1.5;
+                        const waveDelay = (1 - dot) * 2.5; 
+                        userData.progress += (effectiveSpeed * delta * timeFactor) - (waveDelay * 0.001);
+                    } else {
+                        userData.progress += effectiveSpeed * delta * timeFactor;
+                    }
+
+                    let headProgress = userData.travelOutward ? userData.progress : 1 - userData.progress;
+                    headProgress = Math.max(0, Math.min(1, headProgress));
+
+                    const tailProgress = userData.travelOutward 
+                        ? Math.max(0, headProgress - COMET_LENGTH) 
+                        : Math.min(1, headProgress + COMET_LENGTH);
+
+                    head = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * headProgress);
+                    tail = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * tailProgress);
                 }
-
-                let headProgress = userData.travelOutward ? userData.progress : 1 - userData.progress;
-                headProgress = Math.max(0, Math.min(1, headProgress));
-
-                const tailProgress = userData.travelOutward 
-                    ? Math.max(0, headProgress - COMET_LENGTH) 
-                    : Math.min(1, headProgress + COMET_LENGTH);
-
-                const head = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * headProgress);
-                const tail = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * tailProgress);
 
                 const positions = (comet.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
                 tail.toArray(positions, 0);
@@ -550,8 +576,11 @@ export function FractalSphere() {
                        userData.direction.randomDirection();
                        userData.delay = Math.random() * 5 + 2;
                     } else {
-                       // In wave mode, they just reset progress and wait for the wave
+                       // Reset for other modes
                        userData.delay = 0;
+                       if (phaseRef.current === 'spiral') {
+                          userData.theta = Math.random() * 2 * Math.PI;
+                       }
                     }
                 }
             });
@@ -561,12 +590,17 @@ export function FractalSphere() {
                 completedComets = 0;
                 iterationCycleRef.current++;
                 
-                if (iterationCycleRef.current > 2 && iterationCycleRef.current <= 8) {
+                if (iterationCycleRef.current > 2 && iterationCycleRef.current <= 5) {
                     phaseRef.current = 'wave';
-                    if (iterationCycleRef.current === 3) { // New wave starts
+                    if (iterationCycleRef.current === 3) {
                         waveAxisRef.current.randomDirection();
                     }
-                } else if (iterationCycleRef.current > 8) {
+                } else if (iterationCycleRef.current > 5 && iterationCycleRef.current <= 10) {
+                    phaseRef.current = 'spiral';
+                     if (iterationCycleRef.current === 6) {
+                        spiralAxisRef.current.randomDirection();
+                    }
+                } else if (iterationCycleRef.current > 10) {
                     phaseRef.current = 'random';
                     iterationCycleRef.current = 0; // Reset cycle
                 } else {
