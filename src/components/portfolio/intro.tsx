@@ -46,7 +46,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
       <div className="relative z-10 max-w-3xl mx-auto px-4">
         {typistKey > 0 && (
            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-             <Typist key={typistKey} typingDelay={120} cursor={'|'}>
+             <Typist key={typistKey} typingDelay={120}>
                <span>{"hi, "}</span>
                <span className="text-primary">{"yeison"}</span>
                <span className="relative">
@@ -80,6 +80,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
                  />
                </span>
              </Typist>
+             <span className="animate-blink">|</span>
            </h1>
         )}
         <p className="mt-4 text-lg md:text-xl text-muted-foreground">
