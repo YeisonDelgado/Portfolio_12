@@ -13,8 +13,8 @@ const navLinks = [
 ];
 
 const socialLinks = [
-    { href: "https://github.com/yeisondelgado", label: "GitHub", icon: Github },
-    { href: "https://www.linkedin.com/in/yeison-delgado-ordonez/", label: "LinkedIn", icon: Linkedin },
+    { href: "https://github.com/YeisonDelgado", label: "GitHub", icon: Github },
+    { href: "https://www.linkedin.com/in/estiven-delgado/", label: "LinkedIn", icon: Linkedin },
 ];
 
 export function Header() {
