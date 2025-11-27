@@ -49,39 +49,36 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
              <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor'>|</span>}>
                <span>{"hi, "}</span>
                <span className="text-primary">{"yeison"}</span>
-               <span>
+               <span className="relative">
                  {" here."}
-                 <span className="absolute inset-0">
-                    <span
-                       className={cn(
-                         'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full',
-                         'bg-primary/20 text-primary',
-                         showButton ? 'opacity-100' : 'opacity-0'
-                       )}
-                        style={{
-                         left: '100%',
-                         top: '50%',
-                         transform: 'translateY(-50%)',
-                         marginLeft: '0.5rem',
-                         pointerEvents: 'none'
-                       }}
-                    >
-                      <Zap className="h-4 w-4" />
-                    </span>
-                    <div
-                     className="absolute cursor-pointer"
-                     onClick={handleEnergizeClick}
+                 <span
+                    className={cn(
+                      'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full',
+                      'bg-primary/20 text-primary',
+                      showButton ? 'opacity-100' : 'opacity-0'
+                    )}
                      style={{
-                       width: '80px',
-                       height: '60px',
-                       top: '50%',
-                       left: '70%',
-                       transform: 'translateY(-50%)',
-                     }}
-                    />
+                      left: '100%',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      marginLeft: '0.5rem',
+                      pointerEvents: 'none'
+                    }}
+                 >
+                   <Zap className="h-4 w-4" />
                  </span>
+                 <div
+                  className="absolute cursor-pointer"
+                  onClick={handleEnergizeClick}
+                  style={{
+                    width: '80px',
+                    height: '60px',
+                    top: '50%',
+                    left: '70%',
+                    transform: 'translateY(-50%)',
+                  }}
+                 />
                </span>
-               {' '}
              </Typist>
            </h1>
         )}
