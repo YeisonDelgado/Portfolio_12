@@ -1,6 +1,6 @@
 # Firebase Studio Portfolio
 
-Este es un portafolio interactivo creado con Next.js y Three.js dentro de Firebase Studio.
+Este es un portafolio interactivo creado con Next.js y Three.js dentro de Firebase Studio. El código fuente de este proyecto se encuentra en el repositorio [portfolio_12](https://github.com/YeisonDelgado/portfolio_12).
 
 ## Guía de Instalación
 
@@ -16,8 +16,8 @@ Asegúrate de tener instalado lo siguiente en tu sistema:
 
 Primero, clona el repositorio en tu máquina local usando Git:
 ```bash
-git clone <URL_DEL_REPOSITORIO>
-cd <NOMBRE_DEL_DIRECTORIO>
+git clone https://github.com/YeisonDelgado/portfolio_12.git
+cd portfolio_12
 ```
 Si has descargado el código directamente, simplemente navega hasta el directorio del proyecto.
 
