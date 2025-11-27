@@ -20,7 +20,7 @@ export default function Home() {
         </div>
       </main>
       <footer className="py-6 text-center text-muted-foreground">
-        <p>© 2024 Gazi Jarin. All rights reserved.</p>
+        <p>© 2024 Yeison Jarin. All rights reserved.</p>
       </footer>
     </div>
   );

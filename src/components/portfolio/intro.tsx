@@ -48,7 +48,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
           <Typist key={typistKey} typingDelay={120} cursor={<span className='cursor'>|</span>}>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
               {"hi, "}
-              <span className="text-primary">{"gazi"}</span>
+              <span className="text-primary">{"yeison"}</span>
               <span className="relative">
                 {" here."}
                 <div className="absolute inset-0 flex items-center justify-center -right-4">
@@ -97,7 +97,7 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
         </p>
         <div className="mt-8">
           <Button asChild size="lg">
-            <a href="mailto:gazijarin@gmail.com">
+            <a href="mailto:yeisonjarin@gmail.com">
               <Mail className="mr-2 h-5 w-5" />
               Say hi!
             </a>
