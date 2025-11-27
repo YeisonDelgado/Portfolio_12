@@ -6,6 +6,27 @@ import { Button } from '@/components/ui/button';
 import { Github, ExternalLink, Folder } from 'lucide-react';
 
 const projects = [
+   {
+    title: "VitaMind",
+    desc: "Stress detection system using Galvanic Skin Response (GSR) signals, with a mobile UI and a Python/Flask machine learning model for prediction.",
+    techStack: ["Python", "Flask", "Machine Learning", "Android"],
+    githubLink: "",
+    openLink: "",
+  },
+  {
+    title: "Containerized Email Services",
+    desc: "A containerized email stack with Postfix, Amavis, and Dovecot in Docker Compose, implementing content filtering and spam tagging.",
+    techStack: ["Docker", "Docker Compose", "Postfix", "Amavis"],
+    githubLink: "",
+    openLink: "",
+  },
+   {
+    title: "eMBB Services in NGN/IMS",
+    desc: "Led a team to implement enhanced mobile broadband (eMBB) services within an NGN/IMS architecture, including an AI chatbot and mobility management.",
+    techStack: ["NGN", "IMS", "AI", "Mobile Networks"],
+    githubLink: "",
+    openLink: "",
+  },
   {
     title: "No Man's Land",
     desc: "A third-person survival-mode game where you battle against time and space to return to Earth.",
@@ -26,27 +47,6 @@ const projects = [
     techStack: ["Node.js", "Socket.io", "React", "MongoDB"],
     githubLink: "https://github.com/gazijarin/TallTales",
     openLink: "https://talltales.herokuapp.com/",
-  },
-  {
-    title: "TDSB Homework Management",
-    desc: "An application created for Toronto District School Board, with a Flask back-end and a Vue front-end.",
-    techStack: ["Python", "Flask", "Vue.js", "SQL"],
-    githubLink: "https://github.com/gazijarin/TDSBHomeworkManagement",
-    openLink: "https://tdsb-app.herokuapp.com/",
-  },
-  {
-    title: "Adam A.I.",
-    desc: "A self-learning A.I. that learns to traverse through a complex maze using the genetic algorithm.",
-    techStack: ["JavaScript", "HTML", "CSS"],
-    githubLink: "https://github.com/gazijarin/adamai",
-    openLink: "https://gazijarin.github.io/AdamAI/",
-  },
-  {
-    title: "Game Centre",
-    desc: "An Android app consisting of three board games, including multiplayer, autosave, and user authentication.",
-    techStack: ["Java", "Android Studio"],
-    githubLink: "https://github.com/gazijarin/gamecentre",
-    openLink: "",
   },
 ];
 

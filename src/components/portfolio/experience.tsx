@@ -9,6 +9,15 @@ import {
 } from "@/components/ui/tabs";
 
 const experienceItems = {
+    "Univ. of Cauca": {
+      jobTitle: "Academic Monitor @",
+      duration: "APR 2025 - JUN 2025",
+      desc: [
+        "Delivered technical support for computer lab operations, network connectivity, and hardware maintenance.",
+        "Supported students and staff in troubleshooting and optimizing IT resources.",
+        "Ensured accurate documentation of technical procedures and reports."
+      ]
+    },
     Amazon: {
       jobTitle: "Software Development Engineer @",
       duration: "JUL 2022 - PRESENT",
@@ -42,15 +51,6 @@ const experienceItems = {
         "Leveraged WebRTC to develop and maintain a Node.js online video-streaming platform in real-time competitive-mode games to research the effects of active stimulation for those suffering from dementia."
       ]
     },
-    "Orange Gate": {
-      jobTitle: "Software Developer Intern @",
-      duration: "MAY 2019 - AUG 2019",
-      desc: [
-        "Developed a Node.js smart home system through Facebook’s Messenger integrated with Bocco sensors and other smart devices (Nest camera, TPLink smart plugs) to derive conclusions about the current state of the home",
-        "Identified continuous improvements in data quality, design reports and coding activities, presenting results and findings to internal business stakeholders.",
-        "Relevant technologies/tools used: DialogFlow, Vision, AutoML, Messenger Bot API, MongoDB."
-      ]
-    }
   };
 
 export function Experience() {

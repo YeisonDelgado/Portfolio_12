@@ -13,8 +13,8 @@ const navLinks = [
 ];
 
 const socialLinks = [
-    { href: "https://github.com/yeisonjarin", label: "GitHub", icon: Github },
-    { href: "https://www.linkedin.com/in/yeison-jarin/", label: "LinkedIn", icon: Linkedin },
+    { href: "https://github.com/yeisondelgado", label: "GitHub", icon: Github },
+    { href: "https://www.linkedin.com/in/yeison-delgado-ordonez/", label: "LinkedIn", icon: Linkedin },
 ];
 
 export function Header() {
@@ -26,7 +26,7 @@ export function Header() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex h-16 items-center justify-between">
             <a href="#intro" className="text-lg font-bold text-primary">
-              Yeison Jarin
+              Yeison Delgado
             </a>
 
             {/* Desktop Navigation */}

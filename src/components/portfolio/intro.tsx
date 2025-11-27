@@ -87,13 +87,13 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
           I create stuff sometimes.
         </p>
         <p className="mt-6 max-w-2xl mx-auto text-base md:text-lg text-foreground/80">
-          I'm a software engineer from Toronto, Canada. I'm fascinated by
+          I'm a software engineer from Colombia. I'm fascinated by
           large-scale, high-impact products and contributed to major feature launches in
-          industry-leading services as well as apps that have 100M+ installs.
+          industry-leading services.
         </p>
         <div className="mt-8">
           <Button asChild size="lg">
-            <a href="mailto:yeisonjarin@gmail.com">
+            <a href="mailto:yeisondelgado@unicauca.edu.co">
               <Mail className="mr-2 h-5 w-5" />
               Say hi!
             </a>
