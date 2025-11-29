@@ -11,8 +11,8 @@ type ColorScheme =
   | 'Quantum Purple'
   | 'Sunset';
 
-const SPHERE_RADIUS = 1.5;
-const K_NEIGHBORS = 3; 
+const SPHERE_RADIUS = 1.2;
+const K_NEIGHBORS = 3;
 const SPARK_COUNT = 800;
 const COMET_LENGTH = 0.01;
 
@@ -20,7 +20,7 @@ type CometPhase = 'random' | 'wave' | 'spiral';
 
 export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
   const mountRef = useRef<HTMLDivElement>(null);
-  
+
   const [isPlaying, setIsPlaying] = useState(true);
   const [nodeCount, setNodeCount] = useState(110);
 
@@ -28,7 +28,7 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
   // Static parameters
   const speed = '1';
   const colorScheme: ColorScheme = 'Quantum Purple';
-  const intensity = 33;
+  const intensity = 30;
 
 
   // Refs for Three.js objects
@@ -87,10 +87,10 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
 
     const originPositions = new Float32Array(lines.length * 3);
     for (let i = 0; i < lines.length; i++) {
-        lines[i].toArray(originPositions, i * 3);
+      lines[i].toArray(originPositions, i * 3);
     }
     geometry.setAttribute('originPosition', new THREE.BufferAttribute(originPositions, 3));
-    
+
     return { geometry, neuronCount, connectionCount };
   }, [nodeCount]);
 
@@ -111,80 +111,80 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
       }),
       []
     );
-    
+
   const updateColors = useCallback((transitionProgress = 0) => {
     if (!mindStoneGroupRef.current) return;
-    
+
     const stableColorFunc = colorFunctions[colorScheme];
     const energizedColorFunc = colorFunctions['Fire'];
 
     const getColor = (t: number) => {
-        const stableColor = stableColorFunc(t);
-        const energizedColor = energizedColorFunc(t);
-        return stableColor.lerp(energizedColor, transitionProgress);
+      const stableColor = stableColorFunc(t);
+      const energizedColor = energizedColorFunc(t);
+      return stableColor.lerp(energizedColor, transitionProgress);
     };
 
     const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
     if (line && line.geometry) {
-        const colors = [];
-        const positions = line.geometry.attributes.position.array;
-        const count = positions.length / 3;
+      const colors = [];
+      const positions = line.geometry.attributes.position.array;
+      const count = positions.length / 3;
 
-        for (let i = 0; i < count; i++) {
-          const t = i / count;
-          const color = getColor(t);
-          colors.push(color.r, color.g, color.b);
-        }
-        line.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-        if (line.geometry.attributes.color) {
-          line.geometry.attributes.color.needsUpdate = true;
-        }
+      for (let i = 0; i < count; i++) {
+        const t = i / count;
+        const color = getColor(t);
+        colors.push(color.r, color.g, color.b);
+      }
+      line.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      if (line.geometry.attributes.color) {
+        line.geometry.attributes.color.needsUpdate = true;
+      }
     }
 
 
     if (cometsRef.current) {
-        cometsRef.current.children.forEach(child => {
-            const comet = child as THREE.Line;
-            if (comet.material instanceof THREE.LineBasicMaterial) {
-                const colors = [];
-                const color = getColor(0.5);
-                colors.push(color.r * 0.2, color.g * 0.2, color.b * 0.2); // Tail color
-                colors.push(color.r, color.g, color.b); // Head color
-                (comet.geometry as THREE.BufferGeometry).setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-                ((comet.geometry as THREE.BufferGeometry).attributes.color as THREE.BufferAttribute).needsUpdate = true;
-            }
-        });
+      cometsRef.current.children.forEach(child => {
+        const comet = child as THREE.Line;
+        if (comet.material instanceof THREE.LineBasicMaterial) {
+          const colors = [];
+          const color = getColor(0.5);
+          colors.push(color.r * 0.2, color.g * 0.2, color.b * 0.2); // Tail color
+          colors.push(color.r, color.g, color.b); // Head color
+          (comet.geometry as THREE.BufferGeometry).setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+          ((comet.geometry as THREE.BufferGeometry).attributes.color as THREE.BufferAttribute).needsUpdate = true;
+        }
+      });
     }
 
     if (atomGroupRef.current) {
-        atomGroupRef.current.children.forEach(child => {
-            if (child.name === 'orbit' && child instanceof THREE.Line) {
-                (child.material as THREE.LineBasicMaterial).color = new THREE.Color(0x0099ff);
+      atomGroupRef.current.children.forEach(child => {
+        if (child.name === 'orbit' && child instanceof THREE.Line) {
+          (child.material as THREE.LineBasicMaterial).color = new THREE.Color(0x0099ff);
+        }
+        if (child.name === 'electron') {
+          child.traverse(obj => {
+            if (obj instanceof THREE.Mesh && obj.name === 'electron-core') {
+              const electronMaterial = (obj.material as THREE.MeshStandardMaterial);
+              const color = getColor(0.5);
+              electronMaterial.color.set(color);
+              electronMaterial.emissive.set(color);
             }
-            if (child.name === 'electron') {
-                child.traverse(obj => {
-                    if (obj instanceof THREE.Mesh && obj.name === 'electron-core') {
-                        const electronMaterial = (obj.material as THREE.MeshStandardMaterial);
-                        const color = getColor(0.5);
-                        electronMaterial.color.set(color);
-                        electronMaterial.emissive.set(color);
-                    }
-                    if (obj instanceof THREE.Sprite && obj.name === 'electron-glow') {
-                        (obj.material as THREE.SpriteMaterial).color.set(getColor(0.5));
-                    }
-                });
+            if (obj instanceof THREE.Sprite && obj.name === 'electron-glow') {
+              (obj.material as THREE.SpriteMaterial).color.set(getColor(0.5));
             }
-             if (child.name === 'nucleus' && child instanceof THREE.Mesh) {
-                const nucleusColor = new THREE.Color(0x00ffff).lerp(new THREE.Color(0x111111), transitionProgress);
-                (child.material as THREE.MeshBasicMaterial).color = nucleusColor;
-            }
-        });
+          });
+        }
+        if (child.name === 'nucleus' && child instanceof THREE.Mesh) {
+          const nucleusColor = new THREE.Color(0x00ffff).lerp(new THREE.Color(0x111111), transitionProgress);
+          (child.material as THREE.MeshBasicMaterial).color = nucleusColor;
+        }
+      });
     }
 
   }, [colorScheme, colorFunctions]);
-  
+
   const setupScene = useCallback(() => {
-    if(!mountRef.current) return;
+    if (!mountRef.current) return;
     // Cleanup existing scene
     if (rendererRef.current) {
       mountRef.current?.removeChild(rendererRef.current.domElement);
@@ -219,18 +219,18 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
     const mindStoneGroup = new THREE.Group();
     scene.add(mindStoneGroup);
     mindStoneGroupRef.current = mindStoneGroup;
-    
+
     // Atom Core
     const atomGroup = new THREE.Group();
     atomGroupRef.current = atomGroup;
     mindStoneGroup.add(atomGroup);
-    
+
     const nucleusGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.1, 32, 32);
     const nucleusMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, fog: false, transparent: true, opacity: 0.8 });
     const nucleus = new THREE.Mesh(nucleusGeo, nucleusMat);
     nucleus.name = "nucleus";
     atomGroup.add(nucleus);
-    
+
     const orbitRadius = SPHERE_RADIUS * 0.25;
     const orbitMaterial = new THREE.LineBasicMaterial({
       color: 0x0099ff,
@@ -239,8 +239,8 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
       fog: false,
     });
 
-    const lineCount = 15; // Number of lines to superimpose
-    const radiusStep = 0.005; // Distance between each line
+    const lineCount = 12; // Number of lines to superimpose
+    const radiusStep = 0.004; // Distance between each line
 
     for (let i = 0; i < 3; i++) {
       const orbitGroup = new THREE.Group(); // Group for each orbit axis
@@ -251,11 +251,11 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
       for (let j = 0; j < lineCount; j++) {
         const currentRadius = orbitRadius + (j - Math.floor(lineCount / 2)) * radiusStep;
         const curve = new THREE.EllipseCurve(
-            0, 0,
-            currentRadius, currentRadius,
-            0, 2 * Math.PI,
-            false,
-            0
+          0, 0,
+          currentRadius, currentRadius,
+          0, 2 * Math.PI,
+          false,
+          0
         );
         const points = curve.getPoints(100);
         const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
@@ -267,7 +267,7 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
       // Add electron for each of the 3 main orbit axes
       const electronGroup = new THREE.Group();
       electronGroup.name = "electron";
-      
+
       const electronCoreGeo = new THREE.SphereGeometry(SPHERE_RADIUS * 0.02, 16, 16);
       const electronCoreMat = new THREE.MeshStandardMaterial({
         color: 0x00ffff,
@@ -295,14 +295,14 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
 
       const electronCurve = new THREE.EllipseCurve(0, 0, orbitRadius, orbitRadius, 0, 2 * Math.PI, false, 0);
       electronGroup.userData = {
-          curve: electronCurve,
-          orbitRotation: orbitRotation,
-          progress: Math.random(),
-          baseSpeed: (Math.random() * 0.05 + 0.075),
+        curve: electronCurve,
+        orbitRotation: orbitRotation,
+        progress: Math.random(),
+        baseSpeed: (Math.random() * 0.05 + 0.075),
       };
       atomGroup.add(electronGroup);
     }
-    
+
 
     const wireframeGeo = new THREE.SphereGeometry(SPHERE_RADIUS, 32, 16);
     const wireframeMat = new THREE.MeshBasicMaterial({ color: 0x6600ff, wireframe: true, opacity: 0.1, transparent: true });
@@ -321,36 +321,36 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
     cometsRef.current = cometsGroup;
 
     for (let i = 0; i < SPARK_COUNT; i++) {
-        const cometGeo = new THREE.BufferGeometry();
-        cometGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
+      const cometGeo = new THREE.BufferGeometry();
+      cometGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(2 * 3), 3));
 
-        const cometMat = new THREE.LineBasicMaterial({ 
-            vertexColors: true, 
-            linewidth: 2,
-            transparent: true,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-        });
+      const cometMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        linewidth: 2,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
 
-        const comet = new THREE.Line(cometGeo, cometMat);
-        comet.userData = {
-            direction: new THREE.Vector3().randomDirection(),
-            progress: Math.random(),
-            speed: (Math.random() * 0.2 + 0.25),
-            delay: Math.random() * 5,
-            travelOutward: i < SPARK_COUNT / 2,
-            // For spiral
-            phi: Math.acos(1 - 2 * Math.random()), // Latitude
-            theta: Math.random() * 2 * Math.PI, // Longitude
-        };
-        cometsGroup.add(comet);
+      const comet = new THREE.Line(cometGeo, cometMat);
+      comet.userData = {
+        direction: new THREE.Vector3().randomDirection(),
+        progress: Math.random(),
+        speed: (Math.random() * 0.2 + 0.25),
+        delay: Math.random() * 5,
+        travelOutward: i < SPARK_COUNT / 2,
+        // For spiral
+        phi: Math.acos(1 - 2 * Math.random()), // Latitude
+        theta: Math.random() * 2 * Math.PI, // Longitude
+      };
+      cometsGroup.add(comet);
     }
     mindStoneGroup.add(cometsGroup);
 
     updateColors();
 
   }, [generateGeometry, updateColors]);
-  
+
   function createGlowTexture(size: number) {
     const canvas = document.createElement('canvas');
     canvas.width = size;
@@ -368,7 +368,7 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
 
   useEffect(() => {
     setupScene();
-    
+
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
@@ -376,7 +376,7 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
       rendererRef.current.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
-    
+
     let animationFrameId: number;
     let completedComets = 0;
     let lastTransitionProgress = -1;
@@ -395,26 +395,26 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
       const delta = clockRef.current.getDelta();
       const elapsedTime = clockRef.current.getElapsedTime();
       const timeFactor = parseFloat(speed);
-      
+
       const TRANSITION_SPEED = delta * 2.0;
       let needsColorUpdate = false;
-      
+
       if (isEnergized) {
         transitionProgressRef.current = Math.min(1, transitionProgressRef.current + TRANSITION_SPEED);
       } else {
         transitionProgressRef.current = Math.max(0, transitionProgressRef.current - TRANSITION_SPEED);
       }
-      
+
       const transitionProgress = transitionProgressRef.current;
       if (Math.abs(transitionProgress - lastTransitionProgress) > 0.01) {
-          needsColorUpdate = true;
-          lastTransitionProgress = transitionProgress;
+        needsColorUpdate = true;
+        lastTransitionProgress = transitionProgress;
       }
-  
+
       if (needsColorUpdate) {
         updateColors(transitionProgress);
       }
-      
+
 
       if (isPlaying) {
         mindStoneGroupRef.current.rotation.y += 0.002 * timeFactor;
@@ -422,194 +422,194 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
         // Neural network animation - global pulse
         const line = mindStoneGroupRef.current.getObjectByName("neural-net") as THREE.LineSegments;
         if (line && line.geometry) {
-            const currentPos = line.geometry.attributes.position as THREE.BufferAttribute;
-            const originPos = line.geometry.attributes.originPosition as THREE.BufferAttribute;
-            
-            const firingRate = intensity / 100;
-            const pulseCycle = elapsedTime * timeFactor * firingRate * 2;
-            const pulseAmount = (Math.sin(pulseCycle) + 1) / 2; // 0 to 1
-            const easedPulse = 0.5 - 0.5 * Math.cos(pulseAmount * Math.PI); // ease in/out
+          const currentPos = line.geometry.attributes.position as THREE.BufferAttribute;
+          const originPos = line.geometry.attributes.originPosition as THREE.BufferAttribute;
 
-            for (let i = 0; i < currentPos.count; i++) {
-                const ox = originPos.getX(i);
-                const oy = originPos.getY(i);
-                const oz = originPos.getZ(i);
+          const firingRate = intensity / 100;
+          const pulseCycle = elapsedTime * timeFactor * firingRate * 2;
+          const pulseAmount = (Math.sin(pulseCycle) + 1) / 2; // 0 to 1
+          const easedPulse = 0.5 - 0.5 * Math.cos(pulseAmount * Math.PI); // ease in/out
 
-                const pulseStrength = easedPulse * 0.2; // Apply pulse uniformly
-                
-                const vertexVector = new THREE.Vector3(ox, oy, oz);
-                // Apply pulse only if the vertex is on the sphere surface (not at the center)
-                if (vertexVector.length() > 0.1) {
-                  vertexVector.normalize().multiplyScalar(SPHERE_RADIUS + pulseStrength);
-                }
+          for (let i = 0; i < currentPos.count; i++) {
+            const ox = originPos.getX(i);
+            const oy = originPos.getY(i);
+            const oz = originPos.getZ(i);
 
-                currentPos.setXYZ(i, vertexVector.x, vertexVector.y, vertexVector.z);
+            const pulseStrength = easedPulse * 0.2; // Apply pulse uniformly
+
+            const vertexVector = new THREE.Vector3(ox, oy, oz);
+            // Apply pulse only if the vertex is on the sphere surface (not at the center)
+            if (vertexVector.length() > 0.1) {
+              vertexVector.normalize().multiplyScalar(SPHERE_RADIUS + pulseStrength);
             }
-            currentPos.needsUpdate = true;
-            (line.material as THREE.LineBasicMaterial).opacity = easedPulse * 0.5 + 0.2;
+
+            currentPos.setXYZ(i, vertexVector.x, vertexVector.y, vertexVector.z);
+          }
+          currentPos.needsUpdate = true;
+          (line.material as THREE.LineBasicMaterial).opacity = easedPulse * 0.5 + 0.1;
         }
 
         // Atom animation
         if (atomGroupRef.current) {
-            const nucleus = atomGroupRef.current.getObjectByName('nucleus') as THREE.Mesh;
-            if (nucleus) {
-                const baseOpacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.6;
-                (nucleus.material as THREE.MeshBasicMaterial).opacity = baseOpacity * (1 - transitionProgress);
-            }
+          const nucleus = atomGroupRef.current.getObjectByName('nucleus') as THREE.Mesh;
+          if (nucleus) {
+            const baseOpacity = (Math.sin(elapsedTime * 1.5) + 1) / 2 * 0.2 + 0.6;
+            (nucleus.material as THREE.MeshBasicMaterial).opacity = baseOpacity * (1 - transitionProgress);
+          }
 
-            atomGroupRef.current.children.forEach(child => {
-              if (child.name === 'electron') {
-                const electron = child as THREE.Group;
-                const { userData } = electron;
-                if (electron.visible) {
-                  const energizedSpeedMultiplier = 4;
-                  const currentSpeed = userData.baseSpeed * (1 + (energizedSpeedMultiplier - 1) * transitionProgress);
+          atomGroupRef.current.children.forEach(child => {
+            if (child.name === 'electron') {
+              const electron = child as THREE.Group;
+              const { userData } = electron;
+              if (electron.visible) {
+                const energizedSpeedMultiplier = 4;
+                const currentSpeed = userData.baseSpeed * (1 + (energizedSpeedMultiplier - 1) * transitionProgress);
 
-                  userData.progress += delta * currentSpeed * timeFactor;
-                  if(userData.progress > 1) userData.progress -= 1;
-                  
-                  const point2D = userData.curve.getPointAt(userData.progress);
-                  const point = new THREE.Vector3(point2D.x, point2D.y, 0);
-                  
-                  const q = new THREE.Quaternion().setFromEuler(userData.orbitRotation);
-                  point.applyQuaternion(q);
+                userData.progress += delta * currentSpeed * timeFactor;
+                if (userData.progress > 1) userData.progress -= 1;
 
-                  electron.position.copy(point);
-                }
+                const point2D = userData.curve.getPointAt(userData.progress);
+                const point = new THREE.Vector3(point2D.x, point2D.y, 0);
+
+                const q = new THREE.Quaternion().setFromEuler(userData.orbitRotation);
+                point.applyQuaternion(q);
+
+                electron.position.copy(point);
               }
-            });
+            }
+          });
         }
 
 
         // Comets animation
         if (cometsRef.current) {
-            const SPIRAL_PHASE_LENGTH = 4; // seconds
-            const SPIRAL_COMET_COUNT = 600;
-            let spiralOpacity = 1;
+          const SPIRAL_PHASE_LENGTH = 4; // seconds
+          const SPIRAL_COMET_COUNT = 600;
+          let spiralOpacity = 1;
+
+          if (phaseRef.current === 'spiral') {
+            spiralPhaseProgressRef.current += delta / SPIRAL_PHASE_LENGTH;
+            spiralOpacity = easeInOutSine(spiralPhaseProgressRef.current);
+
+            if (spiralPhaseProgressRef.current > 1) {
+              spiralPhaseProgressRef.current = 1;
+            }
+          }
+
+
+          cometsRef.current.children.forEach((child, index) => {
+            const comet = child as THREE.Line;
+            const { userData } = comet;
+
+            userData.delay -= delta;
+            if (userData.delay > 0) {
+              (comet.material as THREE.Material).opacity = 0;
+              return;
+            }
+
+            let head, tail;
 
             if (phaseRef.current === 'spiral') {
-                spiralPhaseProgressRef.current += delta / SPIRAL_PHASE_LENGTH;
-                spiralOpacity = easeInOutSine(spiralPhaseProgressRef.current);
+              // Fade out comets that are not part of the spiral
+              if (index >= SPIRAL_COMET_COUNT) {
+                (comet.material as THREE.Material).opacity = 1 - spiralOpacity;
+                return; // Don't animate these comets further
+              }
+              (comet.material as THREE.Material).opacity = spiralOpacity;
 
-                if (spiralPhaseProgressRef.current > 1) {
-                    spiralPhaseProgressRef.current = 1;
-                }
+
+              const easedSpeedMultiplier = easeInOutQuint(spiralPhaseProgressRef.current);
+              userData.progress += userData.speed * delta * timeFactor * 0.2 * (1 + easedSpeedMultiplier * 1.5);
+
+              const spiralProgress = (userData.progress % 1.0);
+              const turns = 2.0;
+              const currentTheta = userData.theta + spiralProgress * Math.PI * 2 * turns;
+              const currentPhi = userData.phi;
+
+              const radiusMultiplier = Math.sin(spiralProgress * Math.PI); // In and out pulse
+
+              head = new THREE.Vector3();
+              head.setFromSphericalCoords(SPHERE_RADIUS * radiusMultiplier, currentPhi, currentTheta);
+
+              const tailTheta = currentTheta - COMET_LENGTH * 5;
+              tail = new THREE.Vector3();
+              tail.setFromSphericalCoords(SPHERE_RADIUS * radiusMultiplier, currentPhi, tailTheta);
+
+              head.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), spiralAxisRef.current));
+              tail.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), spiralAxisRef.current));
+
+            } else {
+              (comet.material as THREE.Material).opacity = 1;
+              let effectiveSpeed = userData.speed;
+              if (phaseRef.current === 'wave') {
+                const dot = userData.direction.dot(waveAxisRef.current);
+                effectiveSpeed = userData.speed * 1.5;
+                const waveDelay = (1 - dot) * 2.5;
+                userData.progress += (effectiveSpeed * delta * timeFactor) - (waveDelay * 0.001);
+              } else {
+                userData.progress += effectiveSpeed * delta * timeFactor;
+              }
+
+              let headProgress = userData.travelOutward ? userData.progress : 1 - userData.progress;
+              headProgress = Math.max(0, Math.min(1, headProgress));
+
+              const tailProgress = userData.travelOutward
+                ? Math.max(0, headProgress - COMET_LENGTH)
+                : Math.min(1, headProgress + COMET_LENGTH);
+
+              head = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * headProgress);
+              tail = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * tailProgress);
             }
 
+            if (!head || !tail) return;
 
-            cometsRef.current.children.forEach((child, index) => {
-                const comet = child as THREE.Line;
-                const { userData } = comet;
-                
-                userData.delay -= delta;
-                if (userData.delay > 0) {
-                    (comet.material as THREE.Material).opacity = 0;
-                    return;
-                }
-                
-                let head, tail;
+            const positions = (comet.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
+            tail.toArray(positions, 0);
+            head.toArray(positions, 3);
+            (comet.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
 
+            if (userData.progress >= 1.0) {
+              userData.progress = 0;
+              completedComets++;
+
+              if (phaseRef.current === 'random') {
+                userData.direction.randomDirection();
+                userData.delay = Math.random() * 5 + 2;
+              } else {
+                // Reset for other modes
+                userData.delay = 0;
                 if (phaseRef.current === 'spiral') {
-                    // Fade out comets that are not part of the spiral
-                    if (index >= SPIRAL_COMET_COUNT) {
-                        (comet.material as THREE.Material).opacity = 1 - spiralOpacity;
-                        return; // Don't animate these comets further
-                    }
-                     (comet.material as THREE.Material).opacity = spiralOpacity;
-
-
-                    const easedSpeedMultiplier = easeInOutQuint(spiralPhaseProgressRef.current);
-                    userData.progress += userData.speed * delta * timeFactor * 0.2 * (1 + easedSpeedMultiplier * 1.5);
-
-                    const spiralProgress = (userData.progress % 1.0);
-                    const turns = 2.0;
-                    const currentTheta = userData.theta + spiralProgress * Math.PI * 2 * turns;
-                    const currentPhi = userData.phi;
-                     
-                    const radiusMultiplier = Math.sin(spiralProgress * Math.PI); // In and out pulse
-
-                    head = new THREE.Vector3();
-                    head.setFromSphericalCoords(SPHERE_RADIUS * radiusMultiplier, currentPhi, currentTheta);
-                    
-                    const tailTheta = currentTheta - COMET_LENGTH * 5;
-                    tail = new THREE.Vector3();
-                    tail.setFromSphericalCoords(SPHERE_RADIUS * radiusMultiplier, currentPhi, tailTheta);
-
-                    head.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), spiralAxisRef.current));
-                    tail.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), spiralAxisRef.current));
-
-                } else {
-                    (comet.material as THREE.Material).opacity = 1;
-                    let effectiveSpeed = userData.speed;
-                    if (phaseRef.current === 'wave') {
-                        const dot = userData.direction.dot(waveAxisRef.current);
-                        effectiveSpeed = userData.speed * 1.5;
-                        const waveDelay = (1 - dot) * 2.5; 
-                        userData.progress += (effectiveSpeed * delta * timeFactor) - (waveDelay * 0.001);
-                    } else {
-                        userData.progress += effectiveSpeed * delta * timeFactor;
-                    }
-
-                    let headProgress = userData.travelOutward ? userData.progress : 1 - userData.progress;
-                    headProgress = Math.max(0, Math.min(1, headProgress));
-
-                    const tailProgress = userData.travelOutward 
-                        ? Math.max(0, headProgress - COMET_LENGTH) 
-                        : Math.min(1, headProgress + COMET_LENGTH);
-
-                    head = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * headProgress);
-                    tail = userData.direction.clone().multiplyScalar(SPHERE_RADIUS * tailProgress);
+                  userData.theta = Math.random() * 2 * Math.PI;
                 }
-
-                if (!head || !tail) return;
-
-                const positions = (comet.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array;
-                tail.toArray(positions, 0);
-                head.toArray(positions, 3);
-                (comet.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
-
-                if (userData.progress >= 1.0) {
-                    userData.progress = 0;
-                    completedComets++;
-
-                    if (phaseRef.current === 'random') {
-                       userData.direction.randomDirection();
-                       userData.delay = Math.random() * 5 + 2;
-                    } else {
-                       // Reset for other modes
-                       userData.delay = 0;
-                       if (phaseRef.current === 'spiral') {
-                          userData.theta = Math.random() * 2 * Math.PI;
-                       }
-                    }
-                }
-            });
-
-             // Phase transition logic
-            if (completedComets >= SPARK_COUNT) {
-                completedComets = 0;
-                iterationCycleRef.current++;
-                
-                if (iterationCycleRef.current > 2 && iterationCycleRef.current <= 5) {
-                    phaseRef.current = 'wave';
-                    if (iterationCycleRef.current === 3) {
-                        waveAxisRef.current.randomDirection();
-                    }
-                } else if (iterationCycleRef.current > 5 && iterationCycleRef.current <= 10) {
-                    if (phaseRef.current !== 'spiral') {
-                       phaseRef.current = 'spiral';
-                       spiralPhaseProgressRef.current = 0; // Reset spiral timer
-                       if (iterationCycleRef.current === 6) {
-                          spiralAxisRef.current.randomDirection();
-                       }
-                    }
-                } else if (iterationCycleRef.current > 10) {
-                    phaseRef.current = 'random';
-                    iterationCycleRef.current = 0; // Reset cycle
-                } else {
-                    phaseRef.current = 'random';
-                }
+              }
             }
+          });
+
+          // Phase transition logic
+          if (completedComets >= SPARK_COUNT) {
+            completedComets = 0;
+            iterationCycleRef.current++;
+
+            if (iterationCycleRef.current > 2 && iterationCycleRef.current <= 5) {
+              phaseRef.current = 'wave';
+              if (iterationCycleRef.current === 3) {
+                waveAxisRef.current.randomDirection();
+              }
+            } else if (iterationCycleRef.current > 5 && iterationCycleRef.current <= 10) {
+              if (phaseRef.current !== 'spiral') {
+                phaseRef.current = 'spiral';
+                spiralPhaseProgressRef.current = 0; // Reset spiral timer
+                if (iterationCycleRef.current === 6) {
+                  spiralAxisRef.current.randomDirection();
+                }
+              }
+            } else if (iterationCycleRef.current > 10) {
+              phaseRef.current = 'random';
+              iterationCycleRef.current = 0; // Reset cycle
+            } else {
+              phaseRef.current = 'random';
+            }
+          }
         }
       }
 
@@ -618,25 +618,24 @@ export function FractalSphere({ isEnergized }: { isEnergized: boolean }) {
     };
 
     animate();
-    
+
     return () => {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
   }, [speed, isPlaying, intensity, nodeCount, setupScene, updateColors, isEnergized]);
-  
+
   useEffect(() => {
     updateColors(transitionProgressRef.current);
   }, [colorScheme, updateColors]);
 
   return (
     <>
-      <div 
-        ref={mountRef} 
+      <div
+        ref={mountRef}
         className="absolute inset-0 z-0 w-full h-full"
       />
     </>
   );
 }
 
-    

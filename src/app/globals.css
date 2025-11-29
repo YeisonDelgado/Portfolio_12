@@ -16,8 +16,10 @@
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 283 44% 54%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 207 70% 80%;
+    /* azul claro y difuminado */
+    --accent-foreground: 220 10% 30%;
+    /* opcional, para texto sobre el ring */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
@@ -44,8 +46,10 @@
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 283 44% 54%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 207 70% 80%;
+    /* azul claro y difuminado */
+    --accent-foreground: 220 10% 30%;
+    /* opcional, para texto sobre el ring */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
@@ -63,9 +67,44 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply text-foreground;
     background-color: hsl(var(--background));
     background-image: radial-gradient(circle at top, hsl(240 10% 8%) 0%, hsl(var(--background)) 50%);
   }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* animación secuencial para los LI */
+@keyframes fadeItem {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fadeItem {
+  opacity: 0;
+  animation: fadeItem 0.45s ease forwards;
 }

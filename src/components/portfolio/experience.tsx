@@ -9,89 +9,112 @@ import {
 } from "@/components/ui/tabs";
 
 const experienceItems = {
-    "Univ. of Cauca": {
-      jobTitle: "Academic Monitor @",
-      duration: "APR 2025 - JUN 2025",
-      desc: [
-        "Delivered technical support for computer lab operations, network connectivity, and hardware maintenance.",
-        "Supported students and staff in troubleshooting and optimizing IT resources.",
-        "Ensured accurate documentation of technical procedures and reports."
-      ]
-    },
-    Amazon: {
-      jobTitle: "Software Development Engineer @",
-      duration: "JUL 2022 - PRESENT",
-      desc: [
-        "Led development of end-to-end region build automation across Route 53 (AWS's DNS web service).  This enabled the launch of customer-facing global services in new regions within a day, a significant reduction from the previous time-frame of a month.",
-        "Re-built Route 53's core domain management and DNS systems to provide a better user experience to millions of customers."
-      ]
-    },
-    Wattpad: {
-      jobTitle: "Associate Engineer @",
-      duration: "MAY 2020 - APR 2021",
-      desc: [
-        "Developed a responsive React web page (the new Story Details) from scratch, both on client and server side, for an app with massive scale (2 billion daily requests).",
-        "Iteratively built web experiences for 80 million users across high-traffic pages.",
-        "Collaborated with senior engineers and product management following best practices for the full software development life cycle, including coding standards, code reviews, source control management, build processes, testing, and operations."
-      ]
-    },
-    "University of Toronto": {
-      jobTitle: "Research Engineer @",
-      duration: "MAY 2021 - SEPT 2021",
-      desc: [
-        "Developed and researched an NLP-based framework using state-of-the-art tools like Spacy and Stanza to facilitate the derivation of requirements from health data by leveraging syntactic dependencies, entity-recognition and rule-based match-making.",
-        "Application selected for DCS Research Award ($4,000) as part of the ”Visualizing Privacy Analysis Results” project led by Professor Marsha Chechik."
-      ]
-    },
-    Centivizer: {
-      jobTitle: "Software Developer @",
-      duration: "SEPT 2019 - APR 2020",
-      desc: [
-        "Developed interactive and neural-activation technologies to stimulate physical and cognitive functions in order to slow the progression of neurodegenerative disorders.",
-        "Leveraged WebRTC to develop and maintain a Node.js online video-streaming platform in real-time competitive-mode games to research the effects of active stimulation for those suffering from dementia."
-      ]
-    },
-  };
+  "University of Cauca 2025.1": {
+    jobTitle: "Academic Monitor @",
+    duration: "APR 2025 - JUN 2025",
+    desc: [
+      "Delivered technical support for computer lab operations, network connectivity, and hardware maintenance.",
+      "Supported students and staff in troubleshooting and optimizing IT resources.",
+      "Ensured accurate documentation of technical procedures and reports."
+    ]
+  },
+  "University of Cauca 2025.2": {
+    jobTitle: "Academic Monitor @",
+    duration: "OCT 2025 - DEC 2025 (1st week)",
+    desc: [
+      "Reviewed computer equipment across multiple university campuses to ensure software is up-to-date, including antivirus programs, and properly registered in the university database.",
+      "Assisted users with questions about their devices or general IT issues.",
+      "Worked collaboratively in a team, contributing to leadership and shared responsibilities."
+    ]
+  },
+  "Personal Projects": {
+    jobTitle: "Software Development & Cybersecurity Projects",
+    duration: "ONGOING",
+    desc: [
+      "Developed personal software projects to strengthen hands-on programming skills in Python, JavaScript, Java, and cloud technologies.",
+      "Completed multiple certifications in software development, cybersecurity, and ethical hacking to expand technical knowledge and practical expertise.",
+      "Applied learned skills in small-scale projects, CI/CD workflows, and security practices."
+    ]
+  }
+} as const;
 
 export function Experience() {
   const jobKeys = Object.keys(experienceItems);
+  const [activeTab, setActiveTab] = React.useState(jobKeys[0]);
 
   return (
-    <section id="experience" className="py-16 md:py-24">
-      <h2 className="text-3xl font-bold text-center mb-12">
+    <section id="experience" className="py-32 px-6 md:px-12 max-w-6xl mx-auto">
+      <h2 className="text-4xl font-extrabold text-center mb-32 tracking-tight">
         Where I've Worked
       </h2>
-      <Tabs defaultValue={jobKeys[0]} orientation="vertical" className="flex flex-col md:flex-row gap-8 md:gap-16">
-        <TabsList className="w-full md:w-auto h-auto flex-row md:flex-col justify-start bg-transparent p-0">
+
+      <Tabs
+        defaultValue={jobKeys[0]}
+        onValueChange={(v) => setActiveTab(v)}
+        orientation="vertical"
+        className="relative grid grid-cols-[auto_30px_1fr] gap-16"
+      >
+        {/* COLUMNA 1: TABS LIST */}
+        <TabsList className="w-full md:w-56 flex-row md:flex-col bg-transparent p-0">
           {jobKeys.map((key) => (
-            <TabsTrigger 
-              key={key} 
-              value={key} 
-              className="w-full justify-start text-muted-foreground data-[state=active]:text-primary data-[state=active]:bg-primary/10 data-[state=active]:shadow-none"
+            <TabsTrigger
+              key={key}
+              value={key}
+              className="w-full justify-start py-3 text-left 
+               text-muted-foreground 
+               data-[state=active]:text-primary 
+               data-[state=active]:bg-primary/10"
             >
               {key}
             </TabsTrigger>
           ))}
         </TabsList>
 
-        {jobKeys.map((key) => {
+        {/* COLUMNA 2: LÍNEA + PUNTO */}
+        <div className="hidden md:flex flex-col items-center relative -mt-20">
+          <div className="w-[6px] h-[200px] bg-primary/20 rounded-full" />
+
+          <div
+            className="absolute w-4 h-4 bg-primary rounded-full shadow-md transition-all duration-300"
+            style={{
+              top: `${jobKeys.indexOf(activeTab) * 100}px`,
+              transform: "translateY(-50%)",
+            }}
+          />
+        </div>
+
+        {/* COLUMNA 3: CONTENIDO */}
+        <div className="flex-1 -mt-24">
+          {jobKeys.map((key) => {
             const item = experienceItems[key as keyof typeof experienceItems];
+
             return (
-                <TabsContent key={key} value={key} className="w-full mt-0">
-                    <h3 className="text-xl font-bold">
-                        <span>{item.jobTitle}</span>
-                        <span className="text-primary"> {key}</span>
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1 mb-4">{item.duration}</p>
-                    <ul className="space-y-2 list-disc pl-5 text-foreground/80">
-                        {item.desc.map((descItem, i) => (
-                            <li key={i}>{descItem}</li>
-                        ))}
-                    </ul>
-                </TabsContent>
-            )
-        })}
+              <TabsContent key={key} value={key} className="animate-fadeIn">
+                <h3 className="text-xl font-bold">
+                  <span>{item.jobTitle}</span>
+                  <span className="text-primary"> {key}</span>
+                </h3>
+
+                <p className="text-sm48 text-muted-foreground mt-1 mb-4">
+                  {item.duration}
+                </p>
+
+                <ul className="space-y-2 list-disc pl-5 text-foreground/80">
+                  {item.desc.map((point, i) => (
+                    <li
+                      key={i}
+                      className="fadeItem"
+                      style={{ animationDelay: `${i * 0.15}s` }}
+                    >
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </TabsContent>
+            );
+          })}
+        </div>
       </Tabs>
     </section>
   );
-};
+}

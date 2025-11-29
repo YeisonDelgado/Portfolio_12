@@ -4,17 +4,17 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 
 const techStack = [
-    "Python",
-    "Java (Spring Boot)",
-    "JavaScript",
-    "Node.js",
-    "React",
-    "Terraform",
-    "Docker",
-    "Google Cloud",
-    "CI/CD",
-    "SQL",
-    "NoSQL",
+  "Python",
+  "Java (Spring Boot)",
+  "JavaScript",
+  "Node.js",
+  "React",
+  "Terraform",
+  "Docker",
+  "Google Cloud",
+  "CI/CD",
+  "SQL",
+  "NoSQL",
 ];
 
 export function About() {
@@ -50,14 +50,15 @@ export function About() {
             </div>
           </div>
         </div>
-        <div className="relative w-full aspect-square rounded-lg overflow-hidden group">
+        <div className="relative w-full aspect-square flex items-center justify-center">
+          <div className="relative w-[92%] h-[92%] rounded-lg overflow-hidden group">
             <Image
-                src="https://storage.googleapis.com/aai-sit-studio-public-pro-1a39b36/4101e4a3-7647-49f3-8f0a-48d51a66e6c7"
-                alt="Yeison Delgado"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                
+              src="/profile_photo.jpg"
+              alt="Yeison Delgado"
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
+          </div>
         </div>
       </div>
     </section>

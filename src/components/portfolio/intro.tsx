@@ -42,32 +42,32 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
   }, []);
 
   return (
-    <section id="intro" className="container mx-auto flex items-center justify-center px-4 text-center md:px-6 pt-32 md:pt-48 pb-32 md:pb-48">
-      <div className="relative z-10 max-w-3xl">
+    <section id="intro" className="container mx-auto flex items-center justify-center px-4 text-center md:px-6 pt-32 md:pt-36 pb-32 md:pb-48">
+      <div className="relative z-20 max-w-3xl">
         {typistKey > 0 && (
-           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-             <Typist key={typistKey} typingDelay={120}>
-               <span>{"hi, "}</span>
-               <span className="text-primary">{"yeison"}</span>
-               <span className="relative">
-                 {" here."}
-                 <span
-                    className={cn(
-                      'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full',
-                      'bg-primary/20 text-primary',
-                      showButton ? 'opacity-100' : 'opacity-0'
-                    )}
-                     style={{
-                      left: '100%',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      marginLeft: '0.5rem',
-                      pointerEvents: 'none'
-                    }}
-                 >
-                   <Zap className="h-4 w-4" />
-                 </span>
-                 <div
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            <Typist key={typistKey} typingDelay={120}>
+              <span>{"hi, "}</span>
+              <span className="text-primary">{"yeison"}</span>
+              <span className="relative">
+                {" here."}
+                <span
+                  className={cn(
+                    'absolute transition-opacity duration-300 w-auto h-auto p-2 rounded-full',
+                    'bg-primary/20 text-primary',
+                    showButton ? 'opacity-100' : 'opacity-0'
+                  )}
+                  style={{
+                    left: '100%',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    marginLeft: '0.5rem',
+                    pointerEvents: 'none'
+                  }}
+                >
+                  <Zap className="h-4 w-4" />
+                </span>
+                <div
                   className="absolute cursor-pointer"
                   onClick={handleEnergizeClick}
                   style={{
@@ -77,19 +77,19 @@ export function Intro({ isEnergized, setIsEnergized }: IntroProps) {
                     left: '70%',
                     transform: 'translateY(-50%)',
                   }}
-                 />
-               </span>
-             </Typist>
-             <span className="text-2xl md:text-3xl animate-blink">|</span>
-           </h1>
+                />
+              </span>
+            </Typist>
+            <span className="text-2xl md:text-3xl animate-blink">|</span>
+          </h1>
         )}
         <p className="mt-4 text-lg md:text-xl text-muted-foreground">
-          I create stuff sometimes.
+          Ideas come alive, one experiment at a time.
         </p>
         <p className="mt-6 max-w-2xl mx-auto text-base md:text-lg text-foreground/80">
-          I'm a software engineer from Colombia. I'm fascinated by
-          large-scale, high-impact products and contributed to major feature launches in
-          industry-leading services.
+          I’m an Electronics and Telecommunications Engineering student from Popayán, Colombia,
+          enjoying creating end-to-end software—hands-on, detail-oriented, and focused on building
+          solutions that make a difference.
         </p>
         <div className="mt-8">
           <Button asChild size="lg">
